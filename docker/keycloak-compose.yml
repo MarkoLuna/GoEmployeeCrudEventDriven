@@ -1,0 +1,113 @@
+version: '3.4'
+volumes:
+  keycloak-pg-data:
+    name: keycloak-pg-data
+    driver: local
+  keycloak-pg-preinitdb:
+    name: keycloak-pg-preinitdb
+    driver: local
+  keycloak-pg-initdb:
+    name: keycloak-pg-initdb
+    driver: local
+
+services:
+  # employee-service:
+  #   build:
+  #     context: ../employee-service/
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - "JAVA_OPTS=${JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+  #     - "SPRING_PROFILES_ACTIVE=docker"
+  #   healthcheck:
+  #     test: curl --fail http://localhost:8080/actuator/health || exit 1
+  #     interval: 5s
+  #     retries: 15
+  #     start_period: 20s
+  #     timeout: 10s
+  #   depends_on:
+  #     - keycloak-x
+  #     - kafka
+  # employee-service-consumer:
+  #   build:
+  #     context: ../employee-service-consumer/
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:8080"
+  #   environment:
+  #     - "JAVA_OPTS=${JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+  #     - "SPRING_PROFILES_ACTIVE=docker"
+  #   healthcheck:
+  #     test: curl --fail http://localhost:8080/actuator/health || exit 1
+  #     interval: 5s
+  #     retries: 15
+  #     start_period: 20s
+  #     timeout: 10s
+  #   depends_on:
+  #     - keycloak-x
+  #     - kafka
+  keycloak-x-pg:
+    container_name: ws-keycloak-x-pg
+    image: docker.io/bitnami/postgresql:${KEYCLOAK_POSTGRES_VERSION}
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRESQL_DATABASE: ${KEYCLOAK_POSTGRES_DATABASE}
+      POSTGRESQL_USERNAME: ${KEYCLOAK_POSTGRES_USER}
+      POSTGRESQL_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+    volumes:
+      - keycloak-pg-data:/bitnami/postgresql
+      - keycloak-pg-preinitdb:/docker-entrypoint-preinitdb.d
+      - keycloak-pg-initdb:/docker-entrypoint-initdb.d
+
+  keycloak-x:
+    container_name: ws-keycloak-x
+    image: docker.io/bitnami/keycloak:${KEYCLOAK_VERSION}
+    restart: unless-stopped
+    ports:
+      - 8081:8080
+    healthcheck:
+      test: curl --fail http://localhost:8080/ || exit 1
+      interval: 5s
+      retries: 15
+      start_period: 20s
+      timeout: 3s
+    environment:
+      KEYCLOAK_CREATE_ADMIN_USER: true
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KEYCLOAK_DATABASE_HOST: ws-keycloak-x-pg
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_NAME: ${KEYCLOAK_POSTGRES_DATABASE}
+      KEYCLOAK_DATABASE_USER: ${KEYCLOAK_POSTGRES_USER}
+      KEYCLOAK_DATABASE_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+    command: [ "/scripts/run_import.sh" ]
+    volumes:
+      - ./keycloak/scripts:/scripts
+      - ./keycloak/import:/import
+      - ./keycloak/export:/export
+    depends_on:
+      - keycloak-x-pg
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "employee-upsert.v1:1:1,employee-deletion.v1:1:1"

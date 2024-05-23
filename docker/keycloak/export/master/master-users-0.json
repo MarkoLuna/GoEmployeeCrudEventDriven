@@ -1,0 +1,63 @@
+{
+  "realm" : "master",
+  "users" : [ {
+    "id" : "912224af-48bf-43e3-9e5b-ce812a05fac4",
+    "createdTimestamp" : 1685125867568,
+    "username" : "dev",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : false,
+    "credentials" : [ {
+      "id" : "26d825cb-6ca4-4656-8793-75e3f807cf17",
+      "type" : "password",
+      "createdDate" : 1685125867812,
+      "secretData" : "{\"value\":\"gWbDNntnguzpLvfXfIFgzR3+Mp5xHLlswNSW7OBVO6iTJ3CSEQXxdP6axTBe3U8izNhf2eQmhVZGYQmBrZ6Jvg==\",\"salt\":\"EH9OKYqG7VnInqhlxwW+cw==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "admin", "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "7a764da4-b18b-4701-83fe-9c4c3f54593a",
+    "createdTimestamp" : 1685126039253,
+    "username" : "marcosluna",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "firstName" : "Marcos",
+    "lastName" : "Luna",
+    "email" : "josemarcosluna9@gmail.com",
+    "credentials" : [ {
+      "id" : "617c969b-2ee0-48b2-88ab-6a689c724cfb",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1685133229100,
+      "secretData" : "{\"value\":\"wp8JJHCEY2yfunFVwWFc0CLlUi+feO/jU0eYBW8Q7SQ6aX3dUn82yM754zIf61DtNw0WTAoE4jYcthoSRpSO3Q==\",\"salt\":\"25yLPBkbujNgHhmyVAB+Tw==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "create-realm", "offline_access", "admin", "uma_authorization", "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "f140cfbb-8bc8-459e-8329-2f6605cae8a3",
+    "createdTimestamp" : 1685131799480,
+    "username" : "service-account-master-client",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : false,
+    "serviceAccountClientId" : "master-client",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-master" ],
+    "clientRoles" : {
+      "master-client" : [ "uma_protection" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}
