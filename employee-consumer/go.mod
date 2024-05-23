@@ -4,9 +4,10 @@ go 1.20
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/go-oauth2/oauth2/v4 v4.4.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lib/pq v1.3.0
