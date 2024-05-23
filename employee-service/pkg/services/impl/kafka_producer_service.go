@@ -18,17 +18,16 @@ type KafkaProducerService struct {
 	producer kafka.Producer
 }
 
-func NewKafkaProducerService() KafkaProducerService {
+func BuildKafkaProducer() (kafka.Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": bootstrapServers,
 	})
 
-	if err != nil {
-		panic(err)
-	}
-	defer p.Close()
+	return *p, err
+}
 
-	return KafkaProducerService{producer: *p}
+func NewKafkaProducerService(kafkaProducer kafka.Producer) KafkaProducerService {
+	return KafkaProducerService{producer: kafkaProducer}
 }
 
 func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeRequest) error {

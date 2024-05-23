@@ -3,6 +3,7 @@ package impl
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
@@ -14,7 +15,6 @@ import (
 
 var (
 	bootstrapServers    = utils.GetEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-	enabled             = utils.GetEnv("KAFKA_CONSUMER_ENABLED", "false")
 	groupId             = utils.GetEnv("KAFKA_CONSUMER_GROUP_ID", "employee-group")
 	employeeUpsertTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPSERT_TOPIC", "employee-upsert.v1")
 	employeeDeleteTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
@@ -24,56 +24,67 @@ type KafkaConsumerService struct {
 	consumer kafka.Consumer
 }
 
-func NewKafkaConsumerService() KafkaConsumerService {
+func BuildKafkaConsumer() (kafka.Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": bootstrapServers,
 		"group.id":          groupId,
 		"auto.offset.reset": "earliest",
 	})
-	if err != nil {
-		panic(err)
-	}
-	defer c.Close()
-
-	return KafkaConsumerService{consumer: *c}
+	return *c, err
 }
 
-func (kSrv KafkaConsumerService) ListenEmployeeUpsert() {
-	kSrv.consumer.SubscribeTopics([]string{employeeUpsertTopic}, nil)
-
-	for {
-		msg, err := kSrv.consumer.ReadMessage(-1)
-		if err == nil {
-			var employee dto.EmployeeRequest
-			err := json.Unmarshal(msg.Value, &employee)
-			if err != nil {
-				fmt.Printf("Error decoding message: %v\n", err)
-				continue
-			}
-
-			fmt.Printf("Received Employee: %+v\n", employee)
-		} else {
-			fmt.Printf("Error: %v\n", err)
-		}
-	}
+func NewKafkaConsumerService(kafkaConsumer kafka.Consumer) KafkaConsumerService {
+	return KafkaConsumerService{consumer: kafkaConsumer}
 }
 
-func (kSrv KafkaConsumerService) ListenEmployeeDeletion() {
-	kSrv.consumer.SubscribeTopics([]string{employeeDeleteTopic}, nil)
+func isConsumerEnabled() bool {
+	enabled := utils.GetEnv("KAFKA_CONSUMER_ENABLED", "false")
+	consumers_enabled, _ := strconv.ParseBool(enabled)
+	return consumers_enabled
+}
 
-	for {
-		msg, err := kSrv.consumer.ReadMessage(-1)
-		if err == nil {
-			var employee dto.EmployeeRequest
-			err := json.Unmarshal(msg.Value, &employee)
-			if err != nil {
-				fmt.Printf("Error decoding message: %v\n", err)
-				continue
+func (kSrv KafkaConsumerService) ListenEmployeeUpsert() error {
+
+	if isConsumerEnabled() {
+		kSrv.consumer.SubscribeTopics([]string{employeeUpsertTopic}, nil)
+
+		for {
+			msg, err := kSrv.consumer.ReadMessage(-1)
+			if err == nil {
+				var employee dto.EmployeeRequest
+				err := json.Unmarshal(msg.Value, &employee)
+				if err != nil {
+					fmt.Printf("Error decoding message: %v\n", err)
+					continue
+				}
+
+				fmt.Printf("Received Employee: %+v\n", employee)
 			}
-
-			fmt.Printf("Received Employee: %+v\n", employee)
-		} else {
-			fmt.Printf("Error: %v\n", err)
+			return err
 		}
 	}
+	return nil
+}
+
+func (kSrv KafkaConsumerService) ListenEmployeeDeletion() error {
+
+	if isConsumerEnabled() {
+		kSrv.consumer.SubscribeTopics([]string{employeeDeleteTopic}, nil)
+
+		for {
+			msg, err := kSrv.consumer.ReadMessage(-1)
+			if err == nil {
+				var employee dto.EmployeeRequest
+				err := json.Unmarshal(msg.Value, &employee)
+				if err != nil {
+					fmt.Printf("Error decoding message: %v\n", err)
+					continue
+				}
+
+				fmt.Printf("Received Employee: %+v\n", employee)
+			}
+			return err
+		}
+	}
+	return nil
 }
