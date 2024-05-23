@@ -1,0 +1,458 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This app is responsable for a CRUD for Employees.",
+        "title": "Employee Crud API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "josemarcosluna9@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/employee/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get employees from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "EmployeeApi"
+                ],
+                "summary": "get-employees",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Employee"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request!!",
+                        "schema": {}
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Add a new employee to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "EmployeeApi"
+                ],
+                "summary": "create-employee",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "employee-details",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmployeeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request!!",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/api/employee/{employeeId}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get employee from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "EmployeeApi"
+                ],
+                "summary": "get-employee",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Employee ID",
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.Employee"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request!!",
+                        "schema": {}
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update employee",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "EmployeeApi"
+                ],
+                "summary": "update-employee",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Employee ID",
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Some ID",
+                        "name": "employee-details",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmployeeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.Employee"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request!!",
+                        "schema": {}
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete employee from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "EmployeeApi"
+                ],
+                "summary": "delete-employee",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Employee ID",
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request!!",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/healthcheck/": {
+            "get": {
+                "description": "get healthcheck status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Healthcheck"
+                ],
+                "summary": "healthcheck",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/oauth/token": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "login user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "login user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Grant type",
+                        "name": "grant_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/dto.JWTResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization!!",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/oauth/userinfo": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "get user info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "get-user-info",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization!!",
+                        "schema": {}
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.EmployeeRequest": {
+            "type": "object",
+            "required": [
+                "dateOfBirth",
+                "dateOfEmployment",
+                "firstName",
+                "lastName",
+                "secondLastName"
+            ],
+            "properties": {
+                "dateOfBirth": {
+                    "type": "string",
+                    "example": "1994-04-25T12:00:00Z"
+                },
+                "dateOfEmployment": {
+                    "type": "string",
+                    "example": "1994-04-25T12:00:00Z"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Marcos"
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "Luna"
+                },
+                "secondLastName": {
+                    "type": "string",
+                    "example": "Valdez"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "ACTIVE",
+                        "INACTIVE"
+                    ]
+                }
+            }
+        },
+        "dto.JWTResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjbGllbnQiLCJleHAiOjE2NjIxNTY3MDUsInN1YiI6IjAwMDAwMCJ9.xqHSNgbzZWFCmkMw48syhVJvQkyvnnM7__Rk915EMv2Di2kdIFiZJwWIt9RciD2jKgyBB-Usei3wEwzxuHhLgQ"
+                },
+                "expires_in": {
+                    "type": "integer",
+                    "example": 120
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "example": "NMU1NDCWODYTNGZIMY01YMVLLTLLMGETMJU2ZDNLNTJIMGI5"
+                },
+                "scope": {
+                    "type": "string",
+                    "example": "all"
+                },
+                "token_type": {
+                    "type": "string",
+                    "example": "Bearer"
+                }
+            }
+        },
+        "models.Employee": {
+            "type": "object",
+            "required": [
+                "dateOfBirth",
+                "dateOfEmployment",
+                "firstName",
+                "lastName",
+                "secondLastName"
+            ],
+            "properties": {
+                "dateOfBirth": {
+                    "type": "string",
+                    "example": "1994-04-25T12:00:00Z"
+                },
+                "dateOfEmployment": {
+                    "type": "string",
+                    "example": "1994-04-25T12:00:00Z"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Marcos"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "b836ce65-76ab-42c8-b7b8-63ed432963c2"
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "Luna"
+                },
+                "secondLastName": {
+                    "type": "string",
+                    "example": "Valdez"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "ACTIVE",
+                        "INACTIVE"
+                    ]
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        }
+    }
+}

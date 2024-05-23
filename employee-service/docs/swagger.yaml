@@ -1,0 +1,306 @@
+basePath: /
+definitions:
+  dto.EmployeeRequest:
+    properties:
+      dateOfBirth:
+        example: "1994-04-25T12:00:00Z"
+        type: string
+      dateOfEmployment:
+        example: "1994-04-25T12:00:00Z"
+        type: string
+      firstName:
+        example: Marcos
+        type: string
+      lastName:
+        example: Luna
+        type: string
+      secondLastName:
+        example: Valdez
+        type: string
+      status:
+        enum:
+        - ACTIVE
+        - INACTIVE
+        type: string
+    required:
+    - dateOfBirth
+    - dateOfEmployment
+    - firstName
+    - lastName
+    - secondLastName
+    type: object
+  dto.JWTResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjbGllbnQiLCJleHAiOjE2NjIxNTY3MDUsInN1YiI6IjAwMDAwMCJ9.xqHSNgbzZWFCmkMw48syhVJvQkyvnnM7__Rk915EMv2Di2kdIFiZJwWIt9RciD2jKgyBB-Usei3wEwzxuHhLgQ
+        type: string
+      expires_in:
+        example: 120
+        type: integer
+      refresh_token:
+        example: NMU1NDCWODYTNGZIMY01YMVLLTLLMGETMJU2ZDNLNTJIMGI5
+        type: string
+      scope:
+        example: all
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+    type: object
+  models.Employee:
+    properties:
+      dateOfBirth:
+        example: "1994-04-25T12:00:00Z"
+        type: string
+      dateOfEmployment:
+        example: "1994-04-25T12:00:00Z"
+        type: string
+      firstName:
+        example: Marcos
+        type: string
+      id:
+        example: b836ce65-76ab-42c8-b7b8-63ed432963c2
+        type: string
+      lastName:
+        example: Luna
+        type: string
+      secondLastName:
+        example: Valdez
+        type: string
+      status:
+        enum:
+        - ACTIVE
+        - INACTIVE
+        type: string
+    required:
+    - dateOfBirth
+    - dateOfEmployment
+    - firstName
+    - lastName
+    - secondLastName
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: josemarcosluna9@gmail.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This app is responsable for a CRUD for Employees.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Employee Crud API
+  version: "1.0"
+paths:
+  /api/employee/:
+    get:
+      consumes:
+      - application/json
+      description: Get employees from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            items:
+              $ref: '#/definitions/models.Employee'
+            type: array
+        "400":
+          description: Invalid request!!
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: get-employees
+      tags:
+      - EmployeeApi
+    post:
+      consumes:
+      - application/json
+      description: Add a new employee to the database
+      parameters:
+      - description: Some ID
+        in: body
+        name: employee-details
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Invalid request!!
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: create-employee
+      tags:
+      - EmployeeApi
+  /api/employee/{employeeId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete employee from the database
+      parameters:
+      - description: Employee ID
+        in: path
+        name: employeeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Invalid request!!
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: delete-employee
+      tags:
+      - EmployeeApi
+    get:
+      consumes:
+      - application/json
+      description: Get employee from the database
+      parameters:
+      - description: Employee ID
+        in: path
+        name: employeeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.Employee'
+        "400":
+          description: Invalid request!!
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: get-employee
+      tags:
+      - EmployeeApi
+    put:
+      consumes:
+      - application/json
+      description: Update employee
+      parameters:
+      - description: Employee ID
+        in: path
+        name: employeeId
+        required: true
+        type: string
+      - description: Some ID
+        in: body
+        name: employee-details
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.Employee'
+        "400":
+          description: Invalid request!!
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: update-employee
+      tags:
+      - EmployeeApi
+  /healthcheck/:
+    get:
+      consumes:
+      - application/json
+      description: get healthcheck status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: healthcheck
+      tags:
+      - Healthcheck
+  /oauth/token:
+    post:
+      consumes:
+      - application/json
+      description: login user
+      parameters:
+      - description: Password
+        in: query
+        name: password
+        required: true
+        type: string
+      - description: Username
+        in: query
+        name: username
+        required: true
+        type: string
+      - description: Grant type
+        in: path
+        name: grant_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/dto.JWTResponse'
+        "400":
+          description: Invalid authorization!!
+          schema: {}
+      security:
+      - BasicAuth: []
+      summary: login user
+      tags:
+      - Auth
+  /oauth/userinfo:
+    get:
+      consumes:
+      - application/json
+      description: get user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid authorization!!
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: get-user-info
+      tags:
+      - Auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  BasicAuth:
+    type: basic
+swagger: "2.0"

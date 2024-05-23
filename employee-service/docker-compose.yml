@@ -1,0 +1,35 @@
+version: '2'
+services:
+    users_crud:
+        image: goemployee_crud:latest
+        restart: always
+        links:
+            - postgres_db
+        depends_on:
+            - postgres_db
+        ports:
+            - "8080:8080"
+        environment:
+            DB_HOST: "postgres_db"
+            DB_PORT: "5432"
+            DB_NAME: "employee_db"
+            DB_USER: "employee_user"
+            DB_DRIVER_NAME: "postgres"
+            DB_PASSWORD: "employeepw"
+            SERVER_PORT: "8080"
+            SERVER_HOST: "0.0.0.0"
+            OAUTH_ENABLED: "true"
+            SERVER_SSL_ENABLED: "false"
+            SERVER_SSL_CERT_FILE_PATH: "/dist/ssl/cert.pem"
+            SERVER_SSL_KEY_FILE_PATH: "/dist/ssl/key.pem"
+    postgres_db:
+        image: postgres:latest
+        restart: always
+        volumes:
+            - ./resources/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_DB: employee_db
+            POSTGRES_USER: employee_user
+            POSTGRES_PASSWORD: employeepw
