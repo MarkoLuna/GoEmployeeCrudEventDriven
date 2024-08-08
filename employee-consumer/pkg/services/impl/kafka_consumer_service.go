@@ -21,19 +21,19 @@ var (
 )
 
 type KafkaConsumerService struct {
-	consumer kafka.Consumer
+	consumer *kafka.Consumer
 }
 
-func BuildKafkaConsumer() (kafka.Consumer, error) {
+func BuildKafkaConsumer() (*kafka.Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": bootstrapServers,
 		"group.id":          groupId,
 		"auto.offset.reset": "earliest",
 	})
-	return *c, err
+	return c, err
 }
 
-func NewKafkaConsumerService(kafkaConsumer kafka.Consumer) KafkaConsumerService {
+func NewKafkaConsumerService(kafkaConsumer *kafka.Consumer) KafkaConsumerService {
 	return KafkaConsumerService{consumer: kafkaConsumer}
 }
 
