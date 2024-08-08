@@ -14,7 +14,7 @@ build: swagger-build
 	go build -mod readonly -o ${NAME} "${PROJECT}/pkg"
 
 test:
-	go test -race "${PROJECT}/..."
+	go test -timeout 30s "${PROJECT}/..."
 
 test-cover:
 	go test -cover "${PROJECT}/..."

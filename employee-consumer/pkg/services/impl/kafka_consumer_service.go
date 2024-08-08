@@ -7,7 +7,7 @@ import (
 
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 // TODO add concurrency

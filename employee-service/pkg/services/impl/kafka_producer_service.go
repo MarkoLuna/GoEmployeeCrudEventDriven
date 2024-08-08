@@ -5,7 +5,7 @@ import (
 
 	"github.com/MarkoLuna/EmployeeService/pkg/dto"
 	"github.com/MarkoLuna/EmployeeService/pkg/utils"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 var (
@@ -15,18 +15,18 @@ var (
 )
 
 type KafkaProducerService struct {
-	producer kafka.Producer
+	producer *kafka.Producer
 }
 
-func BuildKafkaProducer() (kafka.Producer, error) {
+func BuildKafkaProducer() (*kafka.Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": bootstrapServers,
 	})
 
-	return *p, err
+	return p, err
 }
 
-func NewKafkaProducerService(kafkaProducer kafka.Producer) KafkaProducerService {
+func NewKafkaProducerService(kafkaProducer *kafka.Producer) KafkaProducerService {
 	return KafkaProducerService{producer: kafkaProducer}
 }
 
