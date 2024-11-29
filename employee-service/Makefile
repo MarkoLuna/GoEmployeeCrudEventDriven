@@ -1,5 +1,5 @@
 # constants
-NAME=employeeCrudApp
+NAME=EmployeeService
 PROJECT?=github.com/MarkoLuna/EmployeeService
 
 # https://github.com/swaggo/echo-swagger

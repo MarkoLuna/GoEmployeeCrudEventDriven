@@ -12,7 +12,7 @@ func TestKafkaProducerService_SendUpsert(t *testing.T) {
 	producer, _ := BuildKafkaProducer()
 	kafkaProducerService := NewKafkaProducerService(producer)
 
-	err := kafkaProducerService.SendUpsert(dto.EmployeeRequest{})
+	err := kafkaProducerService.SendUpsert(dto.EmployeeDto{})
 
 	assert.NoError(t, err)
 }
@@ -22,7 +22,7 @@ func TestKafkaProducerService_SendDelete(t *testing.T) {
 	producer, _ := BuildKafkaProducer()
 	kafkaProducerService := NewKafkaProducerService(producer)
 
-	err := kafkaProducerService.SendDelete(dto.EmployeeRequest{})
+	err := kafkaProducerService.SendDelete(dto.EmployeeDto{})
 
 	assert.NoError(t, err)
 }

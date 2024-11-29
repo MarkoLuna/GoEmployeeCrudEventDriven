@@ -299,7 +299,7 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.JWTResponse"
                         }
                     },
-                    "400": {
+                    "401": {
                         "description": "Invalid authorization!!",
                         "schema": {}
                     }
@@ -334,7 +334,7 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "400": {
+                    "401": {
                         "description": "Invalid authorization!!",
                         "schema": {}
                     }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
@@ -21,7 +22,8 @@ var (
 )
 
 type KafkaConsumerService struct {
-	consumer *kafka.Consumer
+	consumer        *kafka.Consumer
+	employeeService services.EmployeeService
 }
 
 func BuildKafkaConsumer() (*kafka.Consumer, error) {
@@ -33,8 +35,10 @@ func BuildKafkaConsumer() (*kafka.Consumer, error) {
 	return c, err
 }
 
-func NewKafkaConsumerService(kafkaConsumer *kafka.Consumer) KafkaConsumerService {
-	return KafkaConsumerService{consumer: kafkaConsumer}
+func NewKafkaConsumerService(kafkaConsumer *kafka.Consumer,
+	employeeService services.EmployeeService) KafkaConsumerService {
+	return KafkaConsumerService{consumer: kafkaConsumer,
+		employeeService: employeeService}
 }
 
 func isConsumerEnabled() bool {
@@ -51,7 +55,7 @@ func (kSrv KafkaConsumerService) ListenEmployeeUpsert() error {
 		for {
 			msg, err := kSrv.consumer.ReadMessage(-1)
 			if err == nil {
-				var employee dto.EmployeeRequest
+				var employee dto.EmployeeDto
 				err := json.Unmarshal(msg.Value, &employee)
 				if err != nil {
 					fmt.Printf("Error decoding message: %v\n", err)
@@ -59,6 +63,23 @@ func (kSrv KafkaConsumerService) ListenEmployeeUpsert() error {
 				}
 
 				fmt.Printf("Received Employee: %+v\n", employee)
+				exists := kSrv.employeeService.ExistsEmployeeById(employee.Id)
+
+				// TODO create mappers from employeeDto to employeeRequest
+				newEmployee := dto.EmployeeRequest{}
+				newEmployee.DateOfBirth = employee.DateOfBirth
+				newEmployee.DateOfEmployment = employee.DateOfEmployment
+				newEmployee.FirstName = employee.FirstName
+				newEmployee.LastName = employee.LastName
+				newEmployee.SecondLastName = employee.SecondLastName
+				newEmployee.Status = employee.Status
+
+				if !exists {
+					kSrv.employeeService.CreateEmployee(newEmployee)
+				} else {
+					kSrv.employeeService.UpdateEmployee(employee.Id, newEmployee)
+				}
+
 			}
 			return err
 		}
@@ -74,7 +95,7 @@ func (kSrv KafkaConsumerService) ListenEmployeeDeletion() error {
 		for {
 			msg, err := kSrv.consumer.ReadMessage(-1)
 			if err == nil {
-				var employee dto.EmployeeRequest
+				var employee dto.EmployeeDto
 				err := json.Unmarshal(msg.Value, &employee)
 				if err != nil {
 					fmt.Printf("Error decoding message: %v\n", err)
@@ -82,6 +103,7 @@ func (kSrv KafkaConsumerService) ListenEmployeeDeletion() error {
 				}
 
 				fmt.Printf("Received Employee: %+v\n", employee)
+				kSrv.employeeService.DeleteEmployeeById(employee.Id)
 			}
 			return err
 		}

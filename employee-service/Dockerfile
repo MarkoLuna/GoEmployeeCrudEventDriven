@@ -2,7 +2,7 @@ FROM golang:1.22-buster
 
 WORKDIR /dist
 
-COPY employeeCrudApp main
+COPY EmployeeService main
 COPY resources/ssl ssl
 
 EXPOSE 8080

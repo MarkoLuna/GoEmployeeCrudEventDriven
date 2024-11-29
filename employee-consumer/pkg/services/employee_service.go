@@ -45,6 +45,11 @@ func (eSrv EmployeeService) GetEmployeeById(employeeId string) (models.Employee,
 	return employeeDetails, err
 }
 
+func (eSrv EmployeeService) ExistsEmployeeById(employeeId string) bool {
+	exists := eSrv.employeeRepository.ExistsById(employeeId)
+	return exists
+}
+
 func (eSrv EmployeeService) UpdateEmployee(employeeId string, employee dto.EmployeeRequest) (models.Employee, error) {
 
 	employeeDetails, err := eSrv.employeeRepository.FindById(employeeId)

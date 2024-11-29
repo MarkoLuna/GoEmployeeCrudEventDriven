@@ -105,6 +105,11 @@ func (er EmployeeRepositoryImpl) FindAll() ([]models.Employee, error) {
 	return employeesSlice, nil
 }
 
+func (er EmployeeRepositoryImpl) ExistsById(ID string) bool {
+	// TODO add impl
+	return false
+}
+
 func (er EmployeeRepositoryImpl) FindById(ID string) (models.Employee, error) {
 
 	var employee models.Employee

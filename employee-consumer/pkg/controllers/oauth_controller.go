@@ -14,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// TODO create other service (ms) for auth service or use keycloak
 type OAuthController struct {
 	oauthServer   *server.Server
 	oauthSevice   services.OAuthService
@@ -56,7 +57,7 @@ func (ctrl OAuthController) Configure() {
 // @Param   username      query string true  "Username"
 // @Param   grant_type      path string true  "Grant type"
 // @Success 200 {object} dto.JWTResponse	"ok"
-// @Failure 400 {object} error "Invalid authorization!!"
+// @Failure 401 {object} error "Invalid authorization!!"
 // @Security BasicAuth
 // @Router /oauth/token [post]
 func (ctrl OAuthController) TokenHandler(c echo.Context) error {
@@ -94,7 +95,7 @@ func (ctrl OAuthController) TokenHandler(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} map[string]string	"ok"
-// @Failure 400 {object} error "Invalid authorization!!"
+// @Failure 401 {object} error "Invalid authorization!!"
 // @Security ApiKeyAuth
 // @Router /oauth/userinfo [get]
 func (ctrl OAuthController) GetUserInfo(c echo.Context) error {

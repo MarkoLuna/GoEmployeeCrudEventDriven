@@ -266,7 +266,7 @@ paths:
           description: ok
           schema:
             $ref: '#/definitions/dto.JWTResponse'
-        "400":
+        "401":
           description: Invalid authorization!!
           schema: {}
       security:
@@ -288,7 +288,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-        "400":
+        "401":
           description: Invalid authorization!!
           schema: {}
       security:

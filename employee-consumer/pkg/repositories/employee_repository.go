@@ -11,6 +11,8 @@ type EmployeeRepository interface {
 
 	FindById(ID string) (models.Employee, error)
 
+	ExistsById(ID string) bool
+
 	DeleteById(ID string) (int64, error)
 
 	Update(e models.Employee) (int64, error)

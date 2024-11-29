@@ -1,5 +1,5 @@
 # constants
-NAME=employeeCrudApp
+NAME=EmployeeConsumer
 PROJECT?=github.com/MarkoLuna/EmployeeConsumer
 
 # https://github.com/swaggo/echo-swagger
@@ -27,8 +27,8 @@ test-total-cover:
 	go tool cover -func cover.out
 	rm cover.out
 
-run: build
-	./${NAME}
+run:
+	go run pkg/main.go
 
 clean:
 	go clean "${PROJECT}/..."

@@ -47,6 +47,10 @@ func (er EmployeeRepositoryStub) FindAll() ([]models.Employee, error) {
 	return employeesSlice, nil
 }
 
+func (er EmployeeRepositoryStub) ExistsById(ID string) bool {
+	return false
+}
+
 func (er EmployeeRepositoryStub) FindById(ID string) (models.Employee, error) {
 
 	var employee models.Employee

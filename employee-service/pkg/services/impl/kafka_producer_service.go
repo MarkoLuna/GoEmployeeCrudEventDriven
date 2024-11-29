@@ -14,6 +14,7 @@ var (
 	employeeDeleteTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
 )
 
+// TODO use this service in controller
 type KafkaProducerService struct {
 	producer *kafka.Producer
 }
@@ -30,7 +31,7 @@ func NewKafkaProducerService(kafkaProducer *kafka.Producer) KafkaProducerService
 	return KafkaProducerService{producer: kafkaProducer}
 }
 
-func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeRequest) error {
+func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeDto) error {
 
 	value, err := json.Marshal(employee)
 	if err != nil {
@@ -52,7 +53,7 @@ func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeRequest) error 
 	*/
 }
 
-func (kSrv KafkaProducerService) SendDelete(employee dto.EmployeeRequest) error {
+func (kSrv KafkaProducerService) SendDelete(employee dto.EmployeeDto) error {
 
 	value, err := json.Marshal(employee)
 	if err != nil {

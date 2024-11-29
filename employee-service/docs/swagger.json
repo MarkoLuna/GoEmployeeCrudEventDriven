@@ -293,7 +293,7 @@
                             "$ref": "#/definitions/dto.JWTResponse"
                         }
                     },
-                    "400": {
+                    "401": {
                         "description": "Invalid authorization!!",
                         "schema": {}
                     }
@@ -328,7 +328,7 @@
                             }
                         }
                     },
-                    "400": {
+                    "401": {
                         "description": "Invalid authorization!!",
                         "schema": {}
                     }

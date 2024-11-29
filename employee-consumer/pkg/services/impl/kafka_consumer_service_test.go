@@ -4,14 +4,18 @@ import (
 	"os"
 	"testing"
 
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/repositories"
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestKafkaConsumerService_ListenEmployeeUpsert_NoErrorsWhenConsumerIsDisabled(t *testing.T) {
 
 	consumer, _ := BuildKafkaConsumer()
+	employeeRepository := repositories.NewEmployeeRepositoryStub()
+	employeeService := services.NewEmployeeService(employeeRepository)
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "false")
-	kafkaConsumerService := NewKafkaConsumerService(consumer)
+	kafkaConsumerService := NewKafkaConsumerService(consumer, employeeService)
 
 	err := kafkaConsumerService.ListenEmployeeUpsert()
 
@@ -21,8 +25,10 @@ func TestKafkaConsumerService_ListenEmployeeUpsert_NoErrorsWhenConsumerIsDisable
 func TestKafkaConsumerService_ListenEmployeeUpsert_ErrorsWhenConsumerIsEnabledAndKafkaFails(t *testing.T) {
 
 	consumer, _ := BuildKafkaConsumer()
+	employeeRepository := repositories.NewEmployeeRepositoryStub()
+	employeeService := services.NewEmployeeService(employeeRepository)
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
-	kafkaConsumerService := NewKafkaConsumerService(consumer)
+	kafkaConsumerService := NewKafkaConsumerService(consumer, employeeService)
 
 	err := kafkaConsumerService.ListenEmployeeUpsert()
 
@@ -32,8 +38,10 @@ func TestKafkaConsumerService_ListenEmployeeUpsert_ErrorsWhenConsumerIsEnabledAn
 func TestKafkaConsumerService_ListenEmployeeDeletio_NoErrorsWhenConsumerIsDisabled(t *testing.T) {
 
 	consumer, _ := BuildKafkaConsumer()
+	employeeRepository := repositories.NewEmployeeRepositoryStub()
+	employeeService := services.NewEmployeeService(employeeRepository)
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "false")
-	kafkaConsumerService := NewKafkaConsumerService(consumer)
+	kafkaConsumerService := NewKafkaConsumerService(consumer, employeeService)
 
 	err := kafkaConsumerService.ListenEmployeeDeletion()
 
@@ -43,8 +51,10 @@ func TestKafkaConsumerService_ListenEmployeeDeletio_NoErrorsWhenConsumerIsDisabl
 func TestKafkaConsumerService_ListenEmployeeDeletio_ErrorsWhenConsumerIsEnabledAndKafkaFails(t *testing.T) {
 
 	consumer, _ := BuildKafkaConsumer()
+	employeeRepository := repositories.NewEmployeeRepositoryStub()
+	employeeService := services.NewEmployeeService(employeeRepository)
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
-	kafkaConsumerService := NewKafkaConsumerService(consumer)
+	kafkaConsumerService := NewKafkaConsumerService(consumer, employeeService)
 
 	err := kafkaConsumerService.ListenEmployeeDeletion()
 
