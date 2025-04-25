@@ -57,8 +57,10 @@ func TestMain(m *testing.M) {
 	sqlMock = mock
 	InitServer(db)
 
-	code := m.Run()
-	os.Exit(code)
+	go func() {
+		code := m.Run()
+		os.Exit(code)
+	}()
 }
 
 func TestFindById(t *testing.T) {
