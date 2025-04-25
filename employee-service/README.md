@@ -2,10 +2,32 @@
 
 Employee Crud Rest API using Golang
 
+## Prerequisites
+### Enable CGO_ENABLED
+```
+go env -w CGO_ENABLED="1"
+```
+
+For check status: 
+```
+go env CGO_ENABLED
+```
+
+### Install gcc
+for Ubuntu: 
+```
+apt-get install build-essential
+```
+
+### install swag
+```
+go install github.com/swaggo/swag/cmd/swag@latest
+```
+
 ## Install deps
 
 ```bash
-$ go mod download
+$ go mod tidy
 ```
 
 ## Run on local
