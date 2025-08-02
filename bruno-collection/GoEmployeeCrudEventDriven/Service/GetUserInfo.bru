@@ -1,0 +1,22 @@
+meta {
+  name: GetUserInfo
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{serviceDomain}}/oauth/userinfo
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+  Authorization: {{auth_type}} {{auth_token}}
+}
+
+body:form-urlencoded {
+  ~password: secret
+  ~username: user
+  ~grant_type: password
+}

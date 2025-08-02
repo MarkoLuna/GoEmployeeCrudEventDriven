@@ -1,0 +1,11 @@
+meta {
+  name: Healthcheck
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{consumerDomain}}/healthcheck/
+  body: none
+  auth: none
+}

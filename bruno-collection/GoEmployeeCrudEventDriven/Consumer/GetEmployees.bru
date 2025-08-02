@@ -1,0 +1,15 @@
+meta {
+  name: GetEmployees
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{consumerDomain}}/api/employee/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{auth_type}} {{auth_token}}
+}

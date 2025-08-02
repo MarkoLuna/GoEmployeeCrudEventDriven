@@ -1,0 +1,26 @@
+meta {
+  name: CreateEmployee
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{serviceDomain}}/api/employee/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{auth_type}} {{auth_token}}
+}
+
+body:json {
+  {
+      "firstName": "Marcos",
+      "lastName": "Luna",
+      "secondLastName": "Valdez",
+      "dateOfBirth": "1994-04-25T12:00:00Z",
+      "dateOfEmployment": "1994-04-25T12:00:00Z",
+      "status": "ACTIVE"
+  }
+}

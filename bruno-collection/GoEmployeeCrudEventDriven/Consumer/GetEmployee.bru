@@ -1,0 +1,19 @@
+meta {
+  name: GetEmployee
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{consumerDomain}}/api/employee/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 07e548e5-50ed-4849-99ea-cc5fef7dda33
+}
+
+headers {
+  Authorization: {{auth_type}} {{auth_token}}
+}

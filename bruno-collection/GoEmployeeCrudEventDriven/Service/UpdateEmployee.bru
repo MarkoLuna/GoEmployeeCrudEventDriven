@@ -1,0 +1,30 @@
+meta {
+  name: UpdateEmployee
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{serviceDomain}}/api/employee/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: a592fea4-8221-46c5-9769-42452c5be5d3
+}
+
+headers {
+  Authorization: {{auth_type}} {{auth_token}}
+}
+
+body:json {
+  {
+      "firstName": "Gerardo",
+      "lastName": "Luna",
+      "secondLastName": "Valdezz",
+      "dateOfBirth": "1994-04-25T12:00:00Z",
+      "dateOfEmployment": "1994-04-25T12:00:00Z",
+      "status": "INACTIVE"
+  }
+}

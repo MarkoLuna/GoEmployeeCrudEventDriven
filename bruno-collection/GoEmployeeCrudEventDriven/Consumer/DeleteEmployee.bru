@@ -1,0 +1,19 @@
+meta {
+  name: DeleteEmployee
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{consumerDomain}}/api/employee/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: ea768d29-0a7e-4a1f-9144-9ab7b5aea5bf
+}
+
+headers {
+  Authorization: {{auth_type}} {{auth_token}}
+}
