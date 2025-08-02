@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "9731f49a-ddab-4c05-8bfb-70a9080f44bb",
-		"name": "GoEmployeeCrudEventDriven",
+		"name": "GoEmployeeConsumerEventDriven",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
