@@ -1,8 +1,6 @@
 module github.com/MarkoLuna/EmployeeService
 
-go 1.23.0
-
-toolchain go1.24.0
+go 1.25.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
