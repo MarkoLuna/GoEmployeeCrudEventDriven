@@ -5,7 +5,7 @@ import (
 
 	"github.com/MarkoLuna/EmployeeService/pkg/dto"
 	"github.com/MarkoLuna/EmployeeService/pkg/utils"
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 var (
