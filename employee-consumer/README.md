@@ -4,66 +4,65 @@ Employee Crud Rest API using Golang
 
 ## Prerequisites
 ### Enable CGO_ENABLED
-```
+```bash
 go env -w CGO_ENABLED="1"
 ```
 
 For check status: 
-```
+```bash
 go env CGO_ENABLED
 ```
 
 ### Install gcc
 for Ubuntu: 
-```
+```bash
 apt-get install build-essential
 ```
 
 ### install swag
-```
+```bash
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
 ## Install deps
 
 ```bash
-$ go mod tidy
+go mod tidy
 ```
 
 ## Run on local
 
-```
-$ go run pkg/main.go
+```bash
+go run pkg/main.go
 ```
 
 Or with make
 
-```
-$ make run
+```bash
+make run
 ```
 
 ## Run with docker
 
-```
-$ make docker-run
+```bash
+make docker-run
 ```
 
 ## Run with docker compose
 
-```
-$ make docker-compose-run
+```bash
+make docker-compose-run
 ```
 
 ## healthcheck
 
-```
-$ curl -X GET http://localhost:8080/healthcheck/
-OK
+```bash
+curl -X GET http://localhost:8080/healthcheck/
 ```
 
 ## Run in k8 locally
 
-```
+```bash
 $ make k8-apply
 $ kubectl exec -it employeecrud-pod -- apk add curl
 $ kubectl exec -it employeecrud-pod -- curl -X GET http://employeecrud-service:8080/healthcheck/
@@ -72,7 +71,7 @@ $ make k8-remove
 
 ## Example Curls
 
-```
+```bash
 # get all employees
 $ curl http://localhost:8080/api/employee/
 []
