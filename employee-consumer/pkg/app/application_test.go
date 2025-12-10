@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -136,7 +135,7 @@ func TestFindById(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
 
 	employeeResponse := models.Employee{}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	err := json.Unmarshal(body, &employeeResponse)
 
 	assert.NotNil(t, employeeResponse)
@@ -194,7 +193,7 @@ func TestFindAll(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
 
 	employeesSlice := make([]models.Employee, 0)
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	err := json.Unmarshal(body, &employeesSlice)
 
 	assert.NotEmpty(t, employeesSlice)
@@ -225,7 +224,7 @@ func TestFindAllError(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
 
 	employeesSlice := make([]models.Employee, 0)
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	err := json.Unmarshal(body, &employeesSlice)
 
 	fmt.Println("response Body:", string(body))
@@ -260,7 +259,7 @@ func TestEmployeeRepositoryImpl_Create(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, resp.StatusCode, "handler returned wrong status code")
 
 	employeeResponse := models.Employee{}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	err := json.Unmarshal(body, &employeeResponse)
 
 	assert.NoError(t, err)
@@ -320,7 +319,7 @@ func TestEmployeeRepositoryImpl_Update(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "handler returned wrong status code")
 
 	employeeResponse := models.Employee{}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	err := json.Unmarshal(body, &employeeResponse)
 
 	assert.NoError(t, err)

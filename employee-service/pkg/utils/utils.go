@@ -3,7 +3,6 @@ package utils
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -13,7 +12,7 @@ func ParseBody(body io.Reader, x interface{}) {
 		return
 	}
 
-	if body, err := ioutil.ReadAll(body); err == nil {
+	if body, err := io.ReadAll(body); err == nil {
 		if err := json.Unmarshal([]byte(body), x); err != nil {
 			return
 		}
