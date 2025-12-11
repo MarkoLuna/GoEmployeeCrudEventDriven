@@ -19,11 +19,6 @@ for Ubuntu:
 apt-get install build-essential
 ```
 
-### install swag
-```bash
-go install github.com/swaggo/swag/cmd/swag@latest
-```
-
 ## Install deps
 
 ```bash
@@ -53,6 +48,9 @@ make docker-run
 ```bash
 make docker-compose-run
 ```
+
+## Swagger UI
+[Link](http://localhost:8080/swagger/)
 
 ## healthcheck
 

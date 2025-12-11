@@ -2,15 +2,10 @@
 NAME=employeeCrudApp
 PROJECT?=github.com/MarkoLuna/EmployeeConsumer
 
-# https://github.com/swaggo/echo-swagger
-# https://github.com/swaggo/swag#declarative-comments-format
-swagger-build:
-	swag init --dir pkg
-
 verify:
 	go mod verify
 
-build: swagger-build
+build:
 	go build -mod readonly -o ${NAME} "${PROJECT}/pkg"
 
 test:
