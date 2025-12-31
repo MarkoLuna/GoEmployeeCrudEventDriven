@@ -274,21 +274,14 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Password",
                         "name": "password",
-                        "in": "query",
+                        "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "Username",
                         "name": "username",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Grant type",
-                        "name": "grant_type",
-                        "in": "path",
+                        "in": "formData",
                         "required": true
                     }
                 ],

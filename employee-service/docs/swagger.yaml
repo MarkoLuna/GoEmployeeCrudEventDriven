@@ -245,18 +245,13 @@ paths:
       description: login user
       parameters:
       - description: Password
-        in: query
+        in: formData
         name: password
         required: true
         type: string
       - description: Username
-        in: query
+        in: formData
         name: username
-        required: true
-        type: string
-      - description: Grant type
-        in: path
-        name: grant_type
         required: true
         type: string
       produces:

@@ -52,9 +52,8 @@ func (ctrl OAuthController) Configure() {
 // @Description login user
 // @Accept  json
 // @Produce  json
-// @Param   password      query string true  "Password"
-// @Param   username      query string true  "Username"
-// @Param   grant_type      path string true  "Grant type"
+// @Param   password      formData string true  "Password"
+// @Param   username      formData string true  "Username"
 // @Success 200 {object} dto.JWTResponse	"ok"
 // @Failure 400 {object} error "Invalid authorization!!"
 // @Security BasicAuth

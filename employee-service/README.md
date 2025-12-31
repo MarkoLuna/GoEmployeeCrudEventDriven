@@ -52,6 +52,13 @@ make docker-compose-run
 ## Swagger UI
 [Link](http://localhost:8080/swagger/)
 
+### For update swagger changes execute the following command
+
+```bash
+swag init --dir pkg
+```
+Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is corrent. 
+
 ## healthcheck
 
 ```bash
