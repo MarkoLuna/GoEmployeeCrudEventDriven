@@ -36,17 +36,15 @@
 
 ### Date and Time:
 
-```
+```golang
 s1, _:= time.Parse(time.RFC3339, “2018-12-12T11:45:26.371Z”)
-https://flaviocopes.com/go-date-time-format/
+// https://flaviocopes.com/go-date-time-format/
 ```
 
 ### Static Server
 
-```
-
+```golang
 http.ListenAndServe(":8080", http.FileServer(http.Dir("public"))) // server public dir
-
 ```
 
 ### Generate ssl certificate
@@ -65,12 +63,9 @@ go run $GOROOT/src/crypto/tls/generate_cert.go -host localhost
 
 `go list -m -versions github.com/google/uuid`
 
-
-
 ### Userful commands
 
-```
-
+```bash
 go mod why
 go mod vendor
 go mod graph
