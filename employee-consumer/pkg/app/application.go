@@ -57,7 +57,7 @@ func (app *Application) loadEnvValues() {
 }
 
 func (app *Application) Address() string {
-	port := utils.GetEnv("SERVER_PORT", "8080")
+	port := utils.GetEnv("SERVER_PORT", "8081")
 	host := utils.GetEnv("SERVER_HOST", "0.0.0.0")
 
 	return host + ":" + port

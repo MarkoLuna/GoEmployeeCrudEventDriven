@@ -1,4 +1,3 @@
-version: '3.4'
 volumes:
   keycloak-pg-data:
     name: keycloak-pg-data
@@ -73,14 +72,14 @@ services:
       - postgres_db
   keycloak-x-pg:
     container_name: ws-keycloak-x-pg
-    image: docker.io/bitnami/postgresql:${KEYCLOAK_POSTGRES_VERSION}
+    image: docker.io/postgres:${KEYCLOAK_POSTGRES_VERSION}
     restart: unless-stopped
     ports:
       - 5432:5432
     environment:
-      POSTGRESQL_DATABASE: ${KEYCLOAK_POSTGRES_DATABASE}
-      POSTGRESQL_USERNAME: ${KEYCLOAK_POSTGRES_USER}
-      POSTGRESQL_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${KEYCLOAK_POSTGRES_DATABASE}
+      POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
     volumes:
       - keycloak-pg-data:/bitnami/postgresql
       - keycloak-pg-preinitdb:/docker-entrypoint-preinitdb.d
@@ -88,7 +87,7 @@ services:
 
   keycloak-x:
     container_name: ws-keycloak-x
-    image: docker.io/bitnami/keycloak:${KEYCLOAK_VERSION}
+    image: docker.io/keycloak/keycloak:${KEYCLOAK_VERSION}
     restart: unless-stopped
     ports:
       - 8081:8080
@@ -100,18 +99,17 @@ services:
       timeout: 3s
     environment:
       KEYCLOAK_CREATE_ADMIN_USER: true
-      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_USER}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
-      KEYCLOAK_DATABASE_HOST: ws-keycloak-x-pg
-      KEYCLOAK_DATABASE_PORT: 5432
-      KEYCLOAK_DATABASE_NAME: ${KEYCLOAK_POSTGRES_DATABASE}
-      KEYCLOAK_DATABASE_USER: ${KEYCLOAK_POSTGRES_USER}
-      KEYCLOAK_DATABASE_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
-    command: [ "/scripts/run_import.sh" ]
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KC_HOSTNAME: localhost
+      KC_DB_URL: jdbc:postgresql://ws-keycloak-x-pg:5432/${KEYCLOAK_POSTGRES_DATABASE}
+      KC_DB: ${KEYCLOAK_POSTGRES_DATABASE}
+      KC_DB_USERNAME: ${KEYCLOAK_POSTGRES_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
     volumes:
-      - ./keycloak/scripts:/scripts
-      - ./keycloak/import:/import
-      - ./keycloak/export:/export
+      - ./keycloak/import/dev-realm:/opt/keycloak/data/import
+#      - ./keycloak/import/master:/opt/keycloak/data/import
+#      - ./keycloak/export:/export
     depends_on:
       - keycloak-x-pg
   zookeeper:
@@ -127,7 +125,7 @@ services:
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://localhost:9092,OUTSIDE://localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
@@ -136,10 +134,8 @@ services:
   postgres_db:
     image: postgres:latest
     restart: always
-    volumes:
-        - ./resources/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-        - "5432:5432"
+        - "5433:5432"
     environment:
         POSTGRES_DB: employee_db
         POSTGRES_USER: employee_user

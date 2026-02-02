@@ -30,7 +30,7 @@ import (
 
 var (
 	App      = Application{}
-	basePath = "http://localhost:8080"
+	basePath = "http://localhost:8081"
 
 	dbConnection *sql.DB
 	sqlMock      sqlmock.Sqlmock

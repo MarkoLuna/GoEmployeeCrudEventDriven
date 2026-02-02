@@ -11,7 +11,7 @@ import (
 
 var (
 	host       = utils.GetEnv("DB_HOST", "localhost")
-	port       = utils.GetEnv("DB_PORT", "5432")
+	port       = utils.GetEnv("DB_PORT", "5433")
 	user       = utils.GetEnv("DB_USER", "employee_user")
 	password   = utils.GetEnv("DB_PASSWORD", "employeepw")
 	dbname     = utils.GetEnv("DB_NAME", "employee_db")
