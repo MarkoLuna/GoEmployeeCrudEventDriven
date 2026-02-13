@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/MarkoLuna/EmployeeService/pkg/app/config"
+	"github.com/MarkoLuna/EmployeeService/pkg/clients"
 	"github.com/MarkoLuna/EmployeeService/pkg/controllers"
 	"github.com/MarkoLuna/EmployeeService/pkg/repositories"
 	"github.com/MarkoLuna/EmployeeService/pkg/routes"
@@ -23,15 +25,17 @@ import (
 )
 
 type Application struct {
-	EchoInstance       *echo.Echo
-	DbConnection       *sql.DB
-	EmployeeService    services.EmployeeService
-	ClientService      services.ClientService
-	UserService        services.UserService
-	OAuthService       services.OAuthService
-	EmployeeRepository repositories.EmployeeRepository
-	EmployeeController controllers.EmployeeController
-	OAuthController    controllers.OAuthController
+	EchoInstance                  *echo.Echo
+	DbConnection                  *sql.DB
+	EmployeeService               services.EmployeeService
+	ClientService                 services.ClientService
+	UserService                   services.UserService
+	OAuthService                  services.OAuthService
+	EmployeeRepository            repositories.EmployeeRepository
+	EmployeeController            controllers.EmployeeController
+	OAuthController               controllers.OAuthController
+	EmployeeConsumerServiceClient clients.EmployeeConsumerServiceClient
+	KafkaProducerService          services.KafkaProducerService
 }
 
 func (app *Application) LoadConfiguration() {
@@ -90,7 +94,8 @@ func (app *Application) StartSecureServer() {
 	address := app.Address()
 	log.Println("Starting server on:", address)
 
-	path := "/Users/marcos.luna/go-projects/GoEmployeeCrudEventDriven/EmployeeService"
+	// path := "/Users/marcos.luna/go-projects/GoEmployeeCrudEventDriven/EmployeeService"
+	path, _ := filepath.Abs("../../resources/ssl/cert.pem")
 	certFile := utils.GetEnv("SERVER_SSL_CERT_FILE_PATH", path+"/resources/ssl/cert.pem")
 	keyFile := utils.GetEnv("SERVER_SSL_KEY_FILE_PATH", path+"/resources/ssl/key.pem")
 

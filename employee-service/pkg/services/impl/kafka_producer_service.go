@@ -9,21 +9,12 @@ import (
 )
 
 var (
-	bootstrapServers    = utils.GetEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 	employeeUpsertTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_UPSERT_TOPIC", "employee-upsert.v1")
 	employeeDeleteTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
 )
 
 type KafkaProducerService struct {
 	producer *kafka.Producer
-}
-
-func BuildKafkaProducer() (*kafka.Producer, error) {
-	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": bootstrapServers,
-	})
-
-	return p, err
 }
 
 func NewKafkaProducerService(kafkaProducer *kafka.Producer) KafkaProducerService {
@@ -52,18 +43,13 @@ func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeRequest) error 
 	*/
 }
 
-func (kSrv KafkaProducerService) SendDelete(employee dto.EmployeeRequest) error {
+func (kSrv KafkaProducerService) SendDelete(employeeId string) error {
 
-	value, err := json.Marshal(employee)
-	if err != nil {
-		panic(err)
-	}
-
-	err = kSrv.producer.Produce(&kafka.Message{
+	err := kSrv.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &employeeDeleteTopic,
 			Partition: kafka.PartitionAny},
-		Value: value,
+		Value: []byte(employeeId),
 	}, nil)
 
 	return err

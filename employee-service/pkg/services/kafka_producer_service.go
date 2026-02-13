@@ -4,7 +4,7 @@ import (
 	"github.com/MarkoLuna/EmployeeService/pkg/dto"
 )
 
-type NewKafkaProducerService interface {
-	SendDelete(employee dto.EmployeeRequest) error
+type KafkaProducerService interface {
+	SendDelete(employee string) error
 	SendUpsert(employee dto.EmployeeRequest) error
 }

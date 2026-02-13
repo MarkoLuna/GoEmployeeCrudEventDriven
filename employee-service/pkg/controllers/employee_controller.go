@@ -155,7 +155,7 @@ func (eCtrl EmployeeController) DeleteEmployee(c echo.Context) error {
 	if err == nil {
 		return c.String(http.StatusOK, "")
 	} else {
-		return c.String(http.StatusNotFound, err.Error())
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 }

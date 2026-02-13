@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MarkoLuna/EmployeeService/pkg/clients"
 	"github.com/MarkoLuna/EmployeeService/pkg/constants"
 	"github.com/MarkoLuna/EmployeeService/pkg/controllers"
 	"github.com/MarkoLuna/EmployeeService/pkg/dto"
-	"github.com/MarkoLuna/EmployeeService/pkg/repositories"
 	"github.com/MarkoLuna/EmployeeService/pkg/services"
+	"github.com/MarkoLuna/EmployeeService/pkg/services/stubs"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,8 +22,9 @@ import (
 func TestRegisterEmployeeStoreRoutes(t *testing.T) {
 	echoInstance := echo.New()
 
-	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	employeeProducerService := stubs.NewKafkaProducerServiceStub()
+	employeeService := services.NewEmployeeService(employeeClient, employeeProducerService)
 	employeeController := controllers.NewEmployeeController(employeeService)
 
 	RegisterEmployeeStoreRoutes(echoInstance, &employeeController)

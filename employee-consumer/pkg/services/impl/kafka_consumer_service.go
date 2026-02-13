@@ -14,8 +14,6 @@ import (
 // TODO add policy retry
 
 var (
-	bootstrapServers    = utils.GetEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-	groupId             = utils.GetEnv("KAFKA_CONSUMER_GROUP_ID", "employee-group")
 	employeeUpsertTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPSERT_TOPIC", "employee-upsert.v1")
 	employeeDeleteTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
 )
@@ -24,21 +22,12 @@ type KafkaConsumerService struct {
 	consumer *kafka.Consumer
 }
 
-func BuildKafkaConsumer() (*kafka.Consumer, error) {
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": bootstrapServers,
-		"group.id":          groupId,
-		"auto.offset.reset": "earliest",
-	})
-	return c, err
-}
-
 func NewKafkaConsumerService(kafkaConsumer *kafka.Consumer) KafkaConsumerService {
 	return KafkaConsumerService{consumer: kafkaConsumer}
 }
 
 func isConsumerEnabled() bool {
-	enabled := utils.GetEnv("KAFKA_CONSUMER_ENABLED", "false")
+	enabled := utils.GetEnv("KAFKA_CONSUMER_ENABLED", "true")
 	consumers_enabled, _ := strconv.ParseBool(enabled)
 	return consumers_enabled
 }
@@ -59,6 +48,8 @@ func (kSrv KafkaConsumerService) ListenEmployeeUpsert() error {
 				}
 
 				fmt.Printf("Received Employee: %+v\n", employee)
+				// TODO process upserts
+				continue
 			}
 			return err
 		}
@@ -74,14 +65,11 @@ func (kSrv KafkaConsumerService) ListenEmployeeDeletion() error {
 		for {
 			msg, err := kSrv.consumer.ReadMessage(-1)
 			if err == nil {
-				var employee dto.EmployeeRequest
-				err := json.Unmarshal(msg.Value, &employee)
-				if err != nil {
-					fmt.Printf("Error decoding message: %v\n", err)
-					continue
-				}
+				var employee string = string(msg.Value)
 
 				fmt.Printf("Received Employee: %+v\n", employee)
+				// TODO process deletes
+				continue
 			}
 			return err
 		}

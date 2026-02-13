@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -90,7 +91,8 @@ func (app *Application) StartSecureServer() {
 	address := app.Address()
 	log.Println("Starting server on:", address)
 
-	path := "/Users/marcos.luna/go-projects/GoEmployeeCrudEventDriven/EmployeeConsumer"
+	// path := "/Users/marcos.luna/go-projects/GoEmployeeCrudEventDriven/EmployeeConsumer"
+	path, _ := filepath.Abs("../../resources/ssl/cert.pem")
 	certFile := utils.GetEnv("SERVER_SSL_CERT_FILE_PATH", path+"/resources/ssl/cert.pem")
 	keyFile := utils.GetEnv("SERVER_SSL_KEY_FILE_PATH", path+"/resources/ssl/key.pem")
 

@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/MarkoLuna/EmployeeService/pkg/app"
+	appConfig "github.com/MarkoLuna/EmployeeService/pkg/app/config"
+	"github.com/MarkoLuna/EmployeeService/pkg/clients"
 	"github.com/MarkoLuna/EmployeeService/pkg/config"
 	"github.com/MarkoLuna/EmployeeService/pkg/controllers"
 	"github.com/MarkoLuna/EmployeeService/pkg/repositories"
@@ -55,7 +57,21 @@ func ConfigureApp() {
 		App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, true)
 	}
 
-	App.EmployeeService = services.NewEmployeeService(App.EmployeeRepository)
+	if App.EmployeeConsumerServiceClient == nil {
+		httpClient := appConfig.NewHttpClient()
+		App.EmployeeConsumerServiceClient = clients.NewEmployeeConsumerServiceClient(*httpClient)
+	}
+
+	if App.KafkaProducerService == nil {
+		kafkaConsumer, err := appConfig.NewKafkaProducer()
+		if err != nil {
+			panic(err)
+		}
+
+		App.KafkaProducerService = impl.NewKafkaProducerService(kafkaConsumer)
+	}
+
+	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClient, App.KafkaProducerService)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
 
 	App.ClientService = services.NewClientService()

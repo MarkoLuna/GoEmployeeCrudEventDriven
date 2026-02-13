@@ -3,13 +3,14 @@ package impl
 import (
 	"testing"
 
+	"github.com/MarkoLuna/EmployeeService/pkg/app/config"
 	"github.com/MarkoLuna/EmployeeService/pkg/dto"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestKafkaProducerService_SendUpsert(t *testing.T) {
 
-	producer, _ := BuildKafkaProducer()
+	producer, _ := config.NewKafkaProducer()
 	kafkaProducerService := NewKafkaProducerService(producer)
 
 	err := kafkaProducerService.SendUpsert(dto.EmployeeRequest{})
@@ -19,10 +20,10 @@ func TestKafkaProducerService_SendUpsert(t *testing.T) {
 
 func TestKafkaProducerService_SendDelete(t *testing.T) {
 
-	producer, _ := BuildKafkaProducer()
+	producer, _ := config.NewKafkaProducer()
 	kafkaProducerService := NewKafkaProducerService(producer)
 
-	err := kafkaProducerService.SendDelete(dto.EmployeeRequest{})
+	err := kafkaProducerService.SendDelete("employeeId")
 
 	assert.NoError(t, err)
 }

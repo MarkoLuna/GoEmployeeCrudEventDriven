@@ -4,12 +4,13 @@ import (
 	"os"
 	"testing"
 
+	appConfig "github.com/MarkoLuna/EmployeeConsumer/pkg/app/config"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestKafkaConsumerService_ListenEmployeeUpsert_NoErrorsWhenConsumerIsDisabled(t *testing.T) {
 
-	consumer, _ := BuildKafkaConsumer()
+	consumer, _ := appConfig.NewKafkaConsumer()
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "false")
 	kafkaConsumerService := NewKafkaConsumerService(consumer)
 
@@ -20,7 +21,7 @@ func TestKafkaConsumerService_ListenEmployeeUpsert_NoErrorsWhenConsumerIsDisable
 
 func TestKafkaConsumerService_ListenEmployeeUpsert_ErrorsWhenConsumerIsEnabledAndKafkaFails(t *testing.T) {
 
-	consumer, _ := BuildKafkaConsumer()
+	consumer, _ := appConfig.NewKafkaConsumer()
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
 	kafkaConsumerService := NewKafkaConsumerService(consumer)
 
@@ -31,7 +32,7 @@ func TestKafkaConsumerService_ListenEmployeeUpsert_ErrorsWhenConsumerIsEnabledAn
 
 func TestKafkaConsumerService_ListenEmployeeDeletio_NoErrorsWhenConsumerIsDisabled(t *testing.T) {
 
-	consumer, _ := BuildKafkaConsumer()
+	consumer, _ := appConfig.NewKafkaConsumer()
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "false")
 	kafkaConsumerService := NewKafkaConsumerService(consumer)
 
@@ -42,7 +43,7 @@ func TestKafkaConsumerService_ListenEmployeeDeletio_NoErrorsWhenConsumerIsDisabl
 
 func TestKafkaConsumerService_ListenEmployeeDeletio_ErrorsWhenConsumerIsEnabledAndKafkaFails(t *testing.T) {
 
-	consumer, _ := BuildKafkaConsumer()
+	consumer, _ := appConfig.NewKafkaConsumer()
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
 	kafkaConsumerService := NewKafkaConsumerService(consumer)
 
