@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/models"
+	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 )
 
 func TestGetEnvDefaultValue(t *testing.T) {
