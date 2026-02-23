@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/constants"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/services/stubs"
+	"github.com/MarkoLuna/EmployeeService/internal/constants"
+	"github.com/MarkoLuna/EmployeeService/internal/models"
+	"github.com/MarkoLuna/EmployeeService/internal/repositories"
+	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -84,19 +84,14 @@ func TestFindById(t *testing.T) {
 	sqlMock.ExpectQuery(query).WithArgs(e.Id).WillReturnRows(rows)
 
 	url := fmt.Sprintf("%s/api/employee/%s", basePath, e.Id)
-	resp, err := makeRequest("GET", url, nil)
-	if err != nil {
-		fmt.Errorf("Error information: %s", err.Error())
-		assert.NoError(t, err)
-		return
-	}
+	resp := makeRequest("GET", url, nil)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
 
 	employeeResponse := models.Employee{}
 	body, _ := io.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &employeeResponse)
+	err := json.Unmarshal(body, &employeeResponse)
 
 	assert.NotNil(t, employeeResponse)
 	assert.NoError(t, err)
@@ -120,35 +115,28 @@ func TestFindAll(t *testing.T) {
 	sqlMock.ExpectQuery(query).WillReturnRows(rows)
 
 	url := fmt.Sprintf("%s/api/employee/", basePath)
-	resp, err := makeRequest("GET", url, nil)
-	if err != nil {
-		fmt.Errorf("Error information: %s", err.Error())
-		assert.NoError(t, err)
-		return
-	}
+	resp := makeRequest("GET", url, nil)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
 
 	employeesSlice := make([]models.Employee, 0)
 	body, _ := io.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &employeesSlice)
+	err := json.Unmarshal(body, &employeesSlice)
 
 	assert.NotEmpty(t, employeesSlice)
 	assert.NoError(t, err)
 	assert.Len(t, employeesSlice, 1)
 }
 
-func makeRequest(httpMethod string, url string, body io.Reader) (*http.Response, error) {
+func makeRequest(httpMethod string, url string, body io.Reader) *http.Response {
 	req, err := http.NewRequest(httpMethod, url, body)
-
-	if err != nil {
-		fmt.Errorf("Error information: %s", err.Error())
-		return nil, err
-	}
-
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	return client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	return resp
 }

@@ -6,7 +6,7 @@ verify:
 	go mod verify
 
 build: 
-	go build -mod readonly -o ${NAME} "${PROJECT}/pkg"
+	go build -mod readonly -o ${NAME} "${PROJECT}/cmd/api-server"
 
 test:
 	go test -timeout 30s "${PROJECT}/..."
@@ -30,7 +30,7 @@ clean:
 	rm -f ${NAME}
 
 docker-build:
-	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${NAME} "${PROJECT}/pkg"
+	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${NAME} "${PROJECT}/cmd/api-server"
 	docker build -t goemployee_service:latest .
 	rm -f ${NAME}
 

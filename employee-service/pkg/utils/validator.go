@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/MarkoLuna/EmployeeService/pkg/constants"
+	"github.com/MarkoLuna/EmployeeService/internal/constants"
 	"gopkg.in/go-playground/validator.v9"
 )
 

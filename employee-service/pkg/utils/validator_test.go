@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MarkoLuna/EmployeeService/pkg/constants"
-	"github.com/MarkoLuna/EmployeeService/pkg/dto"
-	"github.com/MarkoLuna/EmployeeService/pkg/models"
+	"github.com/MarkoLuna/EmployeeService/internal/constants"
+	"github.com/MarkoLuna/EmployeeService/internal/dto"
+	"github.com/MarkoLuna/EmployeeService/internal/models"
 )
 
 func TestValidEmployee(t *testing.T) {
