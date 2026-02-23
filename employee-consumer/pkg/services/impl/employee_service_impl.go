@@ -7,6 +7,7 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/models"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/repositories"
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
 	"github.com/google/uuid"
 )
 
@@ -14,7 +15,7 @@ type EmployeeServiceImpl struct {
 	employeeRepository repositories.EmployeeRepository
 }
 
-func NewEmployeeService(employeeRepository repositories.EmployeeRepository) EmployeeServiceImpl {
+func NewEmployeeService(employeeRepository repositories.EmployeeRepository) services.EmployeeService {
 	return EmployeeServiceImpl{employeeRepository}
 }
 
@@ -45,7 +46,7 @@ func (eSrv EmployeeServiceImpl) GetEmployeeById(employeeId string) (models.Emplo
 	return employeeDetails, err
 }
 
-func (eSrv EmployeeServiceImpl) UpdateEmployee(employeeId string, employee dto.EmployeeRequest) (models.Employee, error) {
+func (eSrv EmployeeServiceImpl) UpdateEmployee(employeeId string, employee dto.EmployeeRequest) (*models.Employee, error) {
 
 	employeeDetails, err := eSrv.employeeRepository.FindById(employeeId)
 	if err == nil {
@@ -60,12 +61,12 @@ func (eSrv EmployeeServiceImpl) UpdateEmployee(employeeId string, employee dto.E
 
 		count, _ := eSrv.employeeRepository.Update(employeeDetails)
 		if count > 0 {
-			return employeeDetails, nil
+			return &employeeDetails, nil
 		} else {
-			return models.Employee{}, errors.New("employee not Found")
+			return &models.Employee{}, errors.New("employee not Found during update")
 		}
 	} else {
-		return models.Employee{}, errors.New("employee not Found")
+		return &models.Employee{}, errors.New("employee not Found")
 	}
 }
 

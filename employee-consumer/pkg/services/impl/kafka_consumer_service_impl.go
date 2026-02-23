@@ -26,8 +26,9 @@ type KafkaConsumerServiceImpl struct {
 	employeeService services.EmployeeService
 }
 
-func NewKafkaConsumerService(kafkaConsumer *kafka.Consumer,
-	employeeService services.EmployeeService) KafkaConsumerServiceImpl {
+func NewKafkaConsumerService(
+	kafkaConsumer *kafka.Consumer,
+	employeeService services.EmployeeService) services.KafkaConsumerService {
 	return KafkaConsumerServiceImpl{
 		consumer:        kafkaConsumer,
 		employeeService: employeeService,
@@ -55,7 +56,7 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeInsert() error {
 					continue
 				}
 
-				fmt.Printf("Received Employee for creation: %+v\n", employeeMessage)
+				fmt.Printf("Received Employee for creation: %v\n", employeeMessage)
 				created, err := kSrv.employeeService.CreateEmployee(employeeMessage.EmployeeInfo)
 				if err != nil {
 					log.Printf("error creating employee %v", employeeMessage)

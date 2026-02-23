@@ -24,15 +24,16 @@ import (
 )
 
 type Application struct {
-	EchoInstance       *echo.Echo
-	DbConnection       *sql.DB
-	EmployeeService    services.EmployeeService
-	ClientService      services.ClientService
-	UserService        services.UserService
-	OAuthService       services.OAuthService
-	EmployeeRepository repositories.EmployeeRepository
-	EmployeeController controllers.EmployeeController
-	OAuthController    controllers.OAuthController
+	EchoInstance                 *echo.Echo
+	DbConnection                 *sql.DB
+	EmployeeService              services.EmployeeService
+	ClientService                services.ClientService
+	UserService                  services.UserService
+	OAuthService                 services.OAuthService
+	EmployeeKafkaConsumerService services.KafkaConsumerService
+	EmployeeRepository           repositories.EmployeeRepository
+	EmployeeController           controllers.EmployeeController
+	OAuthController              controllers.OAuthController
 }
 
 func (app *Application) LoadConfiguration() {

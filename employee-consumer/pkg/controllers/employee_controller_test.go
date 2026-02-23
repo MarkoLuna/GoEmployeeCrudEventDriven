@@ -14,14 +14,14 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/constants"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/models"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/repositories"
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/services/impl"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEmployeeController_GetEmployeesEmployees(t *testing.T) {
 
 	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeService := impl.NewEmployeeService(employeeRepository)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -61,7 +61,7 @@ func TestEmployeeController_GetEmployeesEmployees(t *testing.T) {
 func TestEmployeeController_CreateEmployeeEmployee(t *testing.T) {
 
 	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeService := impl.NewEmployeeService(employeeRepository)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -102,7 +102,7 @@ func TestEmployeeController_CreateEmployeeEmployee(t *testing.T) {
 func TestEmployeeController_GetEmployeeByIdEmployee(t *testing.T) {
 
 	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeService := impl.NewEmployeeService(employeeRepository)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -137,7 +137,7 @@ func TestEmployeeController_GetEmployeeByIdEmployee(t *testing.T) {
 func TestEmployeeController_UpdateEmployee(t *testing.T) {
 
 	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeService := impl.NewEmployeeService(employeeRepository)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -182,7 +182,7 @@ func TestEmployeeController_UpdateEmployee(t *testing.T) {
 func TestEmployeeController_DeleteEmployee(t *testing.T) {
 
 	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeService := impl.NewEmployeeService(employeeRepository)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()

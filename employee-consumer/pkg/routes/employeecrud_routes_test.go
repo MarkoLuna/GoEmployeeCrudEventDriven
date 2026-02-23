@@ -13,7 +13,7 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/controllers"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/repositories"
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/services/impl"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +22,7 @@ func TestRegisterEmployeeStoreRoutes(t *testing.T) {
 	echoInstance := echo.New()
 
 	employeeRepository := repositories.NewEmployeeRepositoryStub()
-	employeeService := services.NewEmployeeService(employeeRepository)
+	employeeService := impl.NewEmployeeService(employeeRepository)
 	employeeController := controllers.NewEmployeeController(employeeService)
 
 	RegisterEmployeeStoreRoutes(echoInstance, &employeeController)

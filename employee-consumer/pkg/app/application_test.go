@@ -17,7 +17,7 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/controllers"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/repositories"
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
+	"github.com/MarkoLuna/EmployeeConsumer/pkg/services/impl"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/services/stubs"
 	"github.com/labstack/echo/v4"
 
@@ -40,7 +40,7 @@ func InitServer(db_connection *sql.DB) {
 	App.EchoInstance = echo.New()
 	App.DbConnection = db_connection
 	App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, false)
-	App.EmployeeService = services.NewEmployeeService(App.EmployeeRepository)
+	App.EmployeeService = impl.NewEmployeeService(App.EmployeeRepository)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
 	App.OAuthService = stubs.NewOAuthServiceStub()
 

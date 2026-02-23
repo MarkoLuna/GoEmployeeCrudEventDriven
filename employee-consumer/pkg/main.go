@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/app"
+	appConfig "github.com/MarkoLuna/EmployeeConsumer/pkg/app/config"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/config"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/controllers"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/repositories"
@@ -55,8 +58,14 @@ func ConfigureApp() {
 		App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, true)
 	}
 
-	App.EmployeeService = services.NewEmployeeService(App.EmployeeRepository)
+	App.EmployeeService = impl.NewEmployeeService(App.EmployeeRepository)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
+	kafkaConsumer, err := appConfig.NewKafkaConsumer()
+	if err != nil {
+		log.Fatal("Unable to initialize kafka consumer due to Error", err)
+	}
+
+	App.EmployeeKafkaConsumerService = impl.NewKafkaConsumerService(kafkaConsumer, App.EmployeeService)
 
 	App.ClientService = services.NewClientService()
 	App.UserService = services.NewUserService()
