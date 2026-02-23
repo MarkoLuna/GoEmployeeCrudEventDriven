@@ -177,6 +177,7 @@ To regenerate Swagger docs after changing annotations:
 # Run from inside the service directory
 swag init --dir cmd/api-server,internal
 ```
+Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is corrent. 
 
 ---
 

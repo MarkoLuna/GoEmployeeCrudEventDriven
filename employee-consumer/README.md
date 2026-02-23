@@ -1,41 +1,6 @@
 # Employee Crud
 
-Employee Crud Rest API using Golang
-
-## Prerequisites
-### Enable CGO_ENABLED
-```bash
-go env -w CGO_ENABLED="1"
-```
-
-For check status: 
-```bash
-go env CGO_ENABLED
-```
-
-### Install gcc
-for Ubuntu: 
-```bash
-apt-get install build-essential
-```
-
-## Install deps
-
-```bash
-go mod tidy
-```
-
-## Run on local
-
-```bash
-go run pkg/main.go
-```
-
-Or with make
-
-```bash
-make run
-```
+Employee Crud Rest and Kafka Consumer API using Golang
 
 ## Run with docker
 
@@ -49,21 +14,12 @@ make docker-run
 make docker-compose-run
 ```
 
-## Swagger UI
-[Link](http://localhost:8080/swagger/)
-
-## healthcheck
-
-```bash
-curl -X GET http://localhost:8080/healthcheck/
-```
-
 ## Run in k8 locally
 
 ```bash
 $ make k8-apply
-$ kubectl exec -it employeecrud-pod -- apk add curl
-$ kubectl exec -it employeecrud-pod -- curl -X GET http://employeecrud-service:8080/healthcheck/
+$ kubectl exec -it employeecrud-consumer-pod -- apk add curl
+$ kubectl exec -it employeecrud-consumer-pod -- curl -X GET http://employeecrud-consumer-pod:8081/healthcheck/
 $ make k8-remove 
 ```
 
@@ -71,14 +27,14 @@ $ make k8-remove
 
 ```bash
 # get all employees
-$ curl http://localhost:8080/api/employee/
+$ curl http://localhost:8081/api/employee/
 []
 
 # get employee by id
-$ curl http://localhost:8080/api/employee/1 
+$ curl http://localhost:8081/api/employee/1 
 
 # create employee
-$ curl --location --request POST 'http://localhost:8080/api/employee/' \
+$ curl --location --request POST 'http://localhost:8081/api/employee/' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "firstName": "Marcos",
@@ -90,10 +46,10 @@ $ curl --location --request POST 'http://localhost:8080/api/employee/' \
 }'
 
 # delete employee
-$ curl -X DELETE 'http://localhost:8080/api/employee/2'
+$ curl -X DELETE 'http://localhost:8081/api/employee/2'
 
 # update employee
-$ curl --location --request PUT 'http://localhost:8080/api/employee/3' \
+$ curl --location --request PUT 'http://localhost:8081/api/employee/3' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "firstName": "Gerardo",

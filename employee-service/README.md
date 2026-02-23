@@ -1,41 +1,6 @@
 # Employee Crud
 
-Employee Crud Rest API using Golang
-
-## Prerequisites
-### Enable CGO_ENABLED
-```bash
-go env -w CGO_ENABLED="1"
-```
-
-For check status: 
-```bash
-go env CGO_ENABLED
-```
-
-### Install gcc
-for Ubuntu: 
-```bash
-apt-get install build-essential
-```
-
-## Install deps
-
-```bash
-go mod tidy
-```
-
-## Run on local
-
-```bash
-go run pkg/main.go
-```
-
-Or with make
-
-```bash
-make run
-```
+Employee Crud Rest and Kafka Producer API using Golang
 
 ## Run with docker
 
@@ -49,28 +14,12 @@ make docker-run
 make docker-compose-run
 ```
 
-## Swagger UI
-[Link](http://localhost:8080/swagger/)
-
-### For update swagger changes execute the following command
-
-```bash
-swag init --dir pkg
-```
-Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is corrent. 
-
-## healthcheck
-
-```bash
-curl -X GET http://localhost:8080/healthcheck/
-```
-
 ## Run in k8 locally
 
 ```bash
 $ make k8-apply
-$ kubectl exec -it employeecrud-pod -- apk add curl
-$ kubectl exec -it employeecrud-pod -- curl -X GET http://employeecrud-service:8080/healthcheck/
+$ kubectl exec -it employeecrud-service-pod -- apk add curl
+$ kubectl exec -it employeecrud-service-pod -- curl -X GET http://employeecrud-service-pod:8080/healthcheck/
 $ make k8-remove 
 ```
 
