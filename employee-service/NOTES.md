@@ -91,3 +91,5 @@ https://www.sohamkamani.com/golang/jwt-authentication/
 https://medium.com/@elliotchance/a-new-simpler-way-to-do-dependency-injection-in-go-9e191bef50d5
 https://semaphoreci.com/community/tutorials/building-and-testing-a-rest-api-in-go-with-gorilla-mux-and-postgresql
 https://segment.com/blog/5-advanced-testing-techniques-in-go/
+
+[Mock Lib](https://github.com/stretchr/testify?tab=readme-ov-file#mock-package)
