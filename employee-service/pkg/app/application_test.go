@@ -92,6 +92,21 @@ func TestHealthCheck(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "handler returned wrong status code")
 }
 
+func TestHealthCheckWithSsl(t *testing.T) {
+
+	t.Skip("Skipping test: need to refactor this unit tests logic")
+	os.Setenv("SERVER_PORT", "8081")
+	os.Setenv("SERVER_SSL_ENABLED", "true")
+	defer os.Unsetenv("SERVER_PORT")
+	defer os.Unsetenv("SERVER_SSL_ENABLED")
+
+	host := "https://localhost:8081"
+	url := fmt.Sprintf("%s/healthcheck/", host)
+	resp := makeRequest("GET", url, nil)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "handler returned wrong status code")
+}
+
 func makeRequest(httpMethod string, url string, body io.Reader) *http.Response {
 	req, err := http.NewRequest(httpMethod, url, body)
 	req.Header.Set("Content-Type", "application/json")

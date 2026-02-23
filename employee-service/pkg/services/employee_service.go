@@ -21,7 +21,8 @@ func NewEmployeeService(employeeClient clients.EmployeeConsumerServiceClient,
 
 func (eSrv EmployeeService) CreateEmployee(employeeRequest dto.EmployeeRequest) (*models.Employee, error) {
 
-	err := eSrv.employeeProducerService.SendUpsert(employeeRequest)
+	employeeMessage := dto.EmployeeMessage{EmployeeInfo: employeeRequest}
+	err := eSrv.employeeProducerService.SendInsert(employeeMessage)
 	return nil, err
 }
 
@@ -37,10 +38,11 @@ func (eSrv EmployeeService) GetEmployeeById(employeeId string) (models.Employee,
 
 func (eSrv EmployeeService) UpdateEmployee(employeeId string, employee dto.EmployeeRequest) (models.Employee, error) {
 
-	_, err := eSrv.employeeClient.FindById(employeeId)
+	currentEmployee, err := eSrv.employeeClient.FindById(employeeId)
 	if err == nil {
 
-		err := eSrv.employeeProducerService.SendUpsert(employee)
+		employeeMessage := dto.EmployeeMessage{ID: currentEmployee.Id, EmployeeInfo: employee}
+		err := eSrv.employeeProducerService.SendUpdate(employeeMessage)
 		return models.Employee{}, err
 	} else {
 		return models.Employee{}, errors.New("employee not Found")

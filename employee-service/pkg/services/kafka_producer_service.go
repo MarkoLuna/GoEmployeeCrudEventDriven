@@ -6,5 +6,6 @@ import (
 
 type KafkaProducerService interface {
 	SendDelete(employee string) error
-	SendUpsert(employee dto.EmployeeRequest) error
+	SendInsert(employee dto.EmployeeMessage) error
+	SendUpdate(employee dto.EmployeeMessage) error
 }

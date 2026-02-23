@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	employeeUpsertTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_UPSERT_TOPIC", "employee-upsert.v1")
+	employeeInsertTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_UPSERT_TOPIC", "employee-insert.v1")
+	employeeUpdateTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_UPSERT_TOPIC", "employee-update.v1")
 	employeeDeleteTopic = utils.GetEnv("KAFKA_PRODUCER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
 )
 
@@ -21,7 +22,7 @@ func NewKafkaProducerService(kafkaProducer *kafka.Producer) KafkaProducerService
 	return KafkaProducerService{producer: kafkaProducer}
 }
 
-func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeRequest) error {
+func (kSrv KafkaProducerService) SendInsert(employee dto.EmployeeMessage) error {
 
 	value, err := json.Marshal(employee)
 	if err != nil {
@@ -30,17 +31,29 @@ func (kSrv KafkaProducerService) SendUpsert(employee dto.EmployeeRequest) error 
 
 	err = kSrv.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
-			Topic:     &employeeUpsertTopic,
+			Topic:     &employeeInsertTopic,
 			Partition: kafka.PartitionAny},
 		Value: value,
 	}, nil)
 
 	return err
-	/*
-		if err != nil {
-			panic(err)
-		}
-	*/
+}
+
+func (kSrv KafkaProducerService) SendUpdate(employee dto.EmployeeMessage) error {
+
+	value, err := json.Marshal(employee)
+	if err != nil {
+		panic(err)
+	}
+
+	err = kSrv.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{
+			Topic:     &employeeUpdateTopic,
+			Partition: kafka.PartitionAny},
+		Value: value,
+	}, nil)
+
+	return err
 }
 
 func (kSrv KafkaProducerService) SendDelete(employeeId string) error {
@@ -53,9 +66,4 @@ func (kSrv KafkaProducerService) SendDelete(employeeId string) error {
 	}, nil)
 
 	return err
-	/*
-		if err != nil {
-			panic(err)
-		}
-	*/
 }

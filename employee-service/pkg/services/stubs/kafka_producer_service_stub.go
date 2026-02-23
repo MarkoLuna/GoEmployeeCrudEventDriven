@@ -18,9 +18,15 @@ func NewKafkaProducerServiceStubFromError(err error) KafkaProducerServiceStub {
 	return KafkaProducerServiceStub{err: err}
 }
 
-func (kSrv KafkaProducerServiceStub) SendUpsert(employee dto.EmployeeRequest) error {
+func (kSrv KafkaProducerServiceStub) SendInsert(employee dto.EmployeeMessage) error {
 
-	fmt.Println("Upsert send")
+	fmt.Println("Insert send")
+	return kSrv.err
+}
+
+func (kSrv KafkaProducerServiceStub) SendUpdate(employee dto.EmployeeMessage) error {
+
+	fmt.Println("Update send")
 	return kSrv.err
 }
 

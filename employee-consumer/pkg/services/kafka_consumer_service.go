@@ -1,6 +1,7 @@
 package services
 
 type KafkaConsumerService interface {
-	ListenEmployeeUpsert()
+	ListenEmployeeInsert()
+	ListenEmployeeUpdate()
 	ListenEmployeeDeletion()
 }

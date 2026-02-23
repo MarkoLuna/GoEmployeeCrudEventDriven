@@ -8,12 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestKafkaProducerService_SendUpsert(t *testing.T) {
+func TestKafkaProducerService_SendInsert(t *testing.T) {
 
 	producer, _ := config.NewKafkaProducer()
 	kafkaProducerService := NewKafkaProducerService(producer)
 
-	err := kafkaProducerService.SendUpsert(dto.EmployeeRequest{})
+	err := kafkaProducerService.SendInsert(dto.EmployeeMessage{})
+
+	assert.NoError(t, err)
+}
+
+func TestKafkaProducerService_SendUpdate(t *testing.T) {
+
+	producer, _ := config.NewKafkaProducer()
+	kafkaProducerService := NewKafkaProducerService(producer)
+
+	err := kafkaProducerService.SendUpdate(dto.EmployeeMessage{})
 
 	assert.NoError(t, err)
 }
