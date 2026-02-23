@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/pkg/services"
@@ -21,13 +22,20 @@ var (
 	employeeDeleteTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
 )
 
+// KafkaConsumer defines the subset of kafka.Consumer methods used by this service.
+type KafkaConsumer interface {
+	SubscribeTopics(topics []string, rebalanceCb kafka.RebalanceCb) error
+	ReadMessage(timeout time.Duration) (*kafka.Message, error)
+	Close() error
+}
+
 type KafkaConsumerServiceImpl struct {
-	consumer        *kafka.Consumer
+	consumer        KafkaConsumer
 	employeeService services.EmployeeService
 }
 
 func NewKafkaConsumerService(
-	kafkaConsumer *kafka.Consumer,
+	kafkaConsumer KafkaConsumer,
 	employeeService services.EmployeeService) services.KafkaConsumerService {
 	return KafkaConsumerServiceImpl{
 		consumer:        kafkaConsumer,
@@ -47,7 +55,7 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeInsert() error {
 		kSrv.consumer.SubscribeTopics([]string{employeeInsertTopic}, nil)
 
 		for {
-			msg, err := kSrv.consumer.ReadMessage(-1)
+			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
 			if err == nil {
 				var employeeMessage dto.EmployeeMessage
 				err := json.Unmarshal(msg.Value, &employeeMessage)
@@ -77,7 +85,7 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeUpdate() error {
 		kSrv.consumer.SubscribeTopics([]string{employeeUpdateTopic}, nil)
 
 		for {
-			msg, err := kSrv.consumer.ReadMessage(-1)
+			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
 			if err == nil {
 				var employeeMessage dto.EmployeeMessage
 				err := json.Unmarshal(msg.Value, &employeeMessage)
@@ -95,6 +103,7 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeUpdate() error {
 				}
 
 				log.Printf("employee updated successfully with id: %s", updated.Id)
+				continue
 			}
 			return err
 		}
@@ -108,7 +117,7 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeDeletion() error {
 		kSrv.consumer.SubscribeTopics([]string{employeeDeleteTopic}, nil)
 
 		for {
-			msg, err := kSrv.consumer.ReadMessage(-1)
+			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
 			if err == nil {
 				var employeeId string = string(msg.Value)
 
@@ -120,6 +129,7 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeDeletion() error {
 				}
 
 				log.Printf("employee deleted successfully with id: %s", employeeId)
+				continue
 			}
 			return err
 		}
