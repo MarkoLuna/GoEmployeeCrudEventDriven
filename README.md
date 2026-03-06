@@ -181,7 +181,49 @@ Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-
 
 ---
 
-## Example Curls (employee-service)
+---
+
+## Testing via Kubernetes Ingress
+
+For testing when the project is running in Kubernetes via the NGINX Ingress Controller.
+
+**Host Entry:** Ensure `127.0.0.1 api.employee.local` is added to your `/etc/hosts` file.
+
+### employee-service (Producer / CRUD)
+
+```bash
+# Healthcheck
+curl http://api.employee.local/employee-service/healthcheck/
+
+# Get all employees
+curl http://api.employee.local/employee-service/api/employee/
+
+# Create employee
+curl --request POST 'http://api.employee.local/employee-service/api/employee/' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "firstName": "Kubernetes",
+    "lastName": "Test",
+    "secondLastName": "User",
+    "dateOfBirth": "2000-01-01T12:00:00Z",
+    "dateOfEmployment": "2024-01-01T12:00:00Z",
+    "status": "ACTIVE"
+  }'
+```
+
+### employee-consumer (Consumer / Read Replica)
+
+```bash
+# Healthcheck
+curl http://api.employee.local/employee-consumer/healthcheck/
+
+# Get all employees (from read replica)
+curl http://api.employee.local/employee-consumer/api/employee/
+```
+
+---
+
+## Example Curls (Local Development)
 
 ```bash
 # Get all employees

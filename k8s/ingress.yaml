@@ -4,77 +4,28 @@ metadata:
   name: employee-ingress
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
 spec:
   ingressClassName: nginx
   rules:
-    # -------------------------------------------------------
-    # employee-service — REST API (producer / CRUD)
-    # -------------------------------------------------------
-    - host: api.employee-service.local
+    - host: api.employee.local
       http:
         paths:
-          - path: /api/employee
-            pathType: Prefix
+          # service: employee-service (Producer / CRUD)
+          - path: /employee-service(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: employee-service
                 port:
                   number: 8080
-          - path: /oauth
-            pathType: Prefix
-            backend:
-              service:
-                name: employee-service
-                port:
-                  number: 8080
-          - path: /swagger
-            pathType: Prefix
-            backend:
-              service:
-                name: employee-service
-                port:
-                  number: 8080
-          - path: /healthcheck
-            pathType: Prefix
-            backend:
-              service:
-                name: employee-service
-                port:
-                  number: 8080
-
-    # -------------------------------------------------------
-    # employee-consumer — Kafka consumer / read replica API
-    # -------------------------------------------------------
-    - host: api.employee-consumer.local
-      http:
-        paths:
-          - path: /api/employee
-            pathType: Prefix
-            backend:
-              service:
-                name: employee-consumer-service
-                port:
-                  number: 8080
-          - path: /oauth
-            pathType: Prefix
-            backend:
-              service:
-                name: employee-consumer-service
-                port:
-                  number: 8080
-          - path: /swagger
-            pathType: Prefix
-            backend:
-              service:
-                name: employee-consumer-service
-                port:
-                  number: 8080
-          - path: /healthcheck
-            pathType: Prefix
+          # service: employee-consumer-service (Consumer / Read Replica API)
+          - path: /employee-consumer(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: employee-consumer-service
