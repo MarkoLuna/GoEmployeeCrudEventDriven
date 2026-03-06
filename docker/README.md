@@ -15,7 +15,7 @@ docker compose down
 ### Generate tokens
 
 ```bash
-curl --location 'http://localhost:8080/realms/master/protocol/openid-connect/token' \
+curl --location 'http://localhost:8082/realms/master/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --header 'Cookie: AUTH_SESSION_ID_LEGACY=de120b71-c809-45e4-a67f-bbcf0a87bfdb' \
 --data-urlencode 'client_id=master-client' \
@@ -27,7 +27,7 @@ curl --location 'http://localhost:8080/realms/master/protocol/openid-connect/tok
 
 
 ```bash
-curl --location 'http://localhost:8080/realms/dev/protocol/openid-connect/token' \
+curl --location 'http://localhost:8082/realms/dev/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'client_id=newClient' \
 --data-urlencode 'client_secret=newClientSecret' \
@@ -37,7 +37,7 @@ curl --location 'http://localhost:8080/realms/dev/protocol/openid-connect/token'
 ```
 
 ```bash
-curl --location 'http://localhost:8080/realms/dev/protocol/openid-connect/token' \
+curl --location 'http://localhost:8082/realms/dev/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'client_id=newClient' \
 --data-urlencode 'client_secret=newClientSecret' \
