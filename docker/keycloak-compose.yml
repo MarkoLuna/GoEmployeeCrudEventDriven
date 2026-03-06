@@ -130,7 +130,7 @@ services:
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "employee-upsert.v1:1:1,employee-deletion.v1:1:1"
+      KAFKA_CREATE_TOPICS: "employee-upsert.v1:1:1,employee-insert.v1:1:1,employee-update.v1:1:1,employee-deletion.v1:1:1"
   postgres_db:
     image: postgres:latest
     restart: always
