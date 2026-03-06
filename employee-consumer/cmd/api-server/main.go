@@ -87,4 +87,8 @@ func ConfigureApp() {
 	App.OAuthController = controllers.NewOAuthController(oauthServer, App.OAuthService, App.ClientService, App.UserService)
 
 	App.LoadConfiguration()
+
+	go App.EmployeeKafkaConsumerService.ListenEmployeeInsert()
+	go App.EmployeeKafkaConsumerService.ListenEmployeeUpdate()
+	go App.EmployeeKafkaConsumerService.ListenEmployeeDeletion()
 }
