@@ -45,6 +45,7 @@ func NewKafkaConsumerService(
 
 func isConsumerEnabled() bool {
 	enabled := utils.GetEnv("KAFKA_CONSUMER_ENABLED", "true")
+	log.Printf("Consumer enabled: %s", enabled)
 	consumers_enabled, _ := strconv.ParseBool(enabled)
 	return consumers_enabled
 }
@@ -52,11 +53,13 @@ func isConsumerEnabled() bool {
 func (kSrv KafkaConsumerServiceImpl) ListenEmployeeInsert() error {
 
 	if isConsumerEnabled() {
+		log.Printf("Listening for employee insert on topic: %s", employeeInsertTopic)
 		kSrv.consumer.SubscribeTopics([]string{employeeInsertTopic}, nil)
 
 		for {
 			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
 			if err == nil {
+				log.Printf("Received message: %v\n", msg)
 				var employeeMessage dto.EmployeeMessage
 				err := json.Unmarshal(msg.Value, &employeeMessage)
 				if err != nil {
@@ -72,8 +75,10 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeInsert() error {
 				}
 
 				log.Printf("employee created successfully with id: %s", created.Id)
+			} else {
+				log.Printf("error reading message: %v", err)
+				continue
 			}
-			return err
 		}
 	}
 	return nil
@@ -82,11 +87,13 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeInsert() error {
 func (kSrv KafkaConsumerServiceImpl) ListenEmployeeUpdate() error {
 
 	if isConsumerEnabled() {
+		log.Printf("Listening for employee update on topic: %s", employeeUpdateTopic)
 		kSrv.consumer.SubscribeTopics([]string{employeeUpdateTopic}, nil)
 
 		for {
 			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
 			if err == nil {
+				log.Printf("Received message: %v\n", msg)
 				var employeeMessage dto.EmployeeMessage
 				err := json.Unmarshal(msg.Value, &employeeMessage)
 				if err != nil {
@@ -104,8 +111,10 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeUpdate() error {
 
 				log.Printf("employee updated successfully with id: %s", updated.Id)
 				continue
+			} else {
+				log.Printf("error reading message: %v", err)
+				continue
 			}
-			return err
 		}
 	}
 	return nil
@@ -114,11 +123,13 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeUpdate() error {
 func (kSrv KafkaConsumerServiceImpl) ListenEmployeeDeletion() error {
 
 	if isConsumerEnabled() {
+		log.Printf("Listening for employee deletion on topic: %s", employeeDeleteTopic)
 		kSrv.consumer.SubscribeTopics([]string{employeeDeleteTopic}, nil)
 
 		for {
 			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
 			if err == nil {
+				log.Printf("Received message: %v\n", msg)
 				var employeeId string = string(msg.Value)
 
 				fmt.Printf("Received Employee for deletion: %s\n", employeeId)
@@ -130,8 +141,10 @@ func (kSrv KafkaConsumerServiceImpl) ListenEmployeeDeletion() error {
 
 				log.Printf("employee deleted successfully with id: %s", employeeId)
 				continue
+			} else {
+				log.Printf("error reading message: %v", err)
+				continue
 			}
-			return err
 		}
 	}
 	return nil
