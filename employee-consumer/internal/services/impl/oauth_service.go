@@ -14,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// TODO connect to keycloak
 var (
 	signingKey = utils.GetEnv("OAUTH_SIGNING_KEY", "00000000")
 )
