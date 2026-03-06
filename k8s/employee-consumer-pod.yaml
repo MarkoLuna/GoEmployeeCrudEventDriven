@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: employeecrud-pod
+  name: employee-consumer-pod
   labels:
-    app: employeecrud
+    app: employee-consumer
 spec:
   containers:
     - name: service
-      image: goemployee_crud:latest
+      image: go-employee-consumer:latest
       imagePullPolicy: IfNotPresent
       ports:
         - containerPort: 8080
@@ -66,5 +66,4 @@ spec:
         - name: SERVER_SSL_KEY_FILE_PATH
           value: "/dist/ssl/key.pem"
 
-# kubectl apply -f k8s/pod.yaml
-
+# kubectl apply -f k8s/employee-consumer-pod.yaml

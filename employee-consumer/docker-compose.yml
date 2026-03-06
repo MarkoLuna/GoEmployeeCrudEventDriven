@@ -1,27 +1,50 @@
-version: '3'
 services:
-    users_crud:
-        image: goemployee_crud:latest
+    employee-consumer:
+        image: go-employee-consumer:latest
         restart: always
-        links:
-            - postgres_db
         depends_on:
-            - postgres_db
+            postgres_db:
+                condition: service_healthy
+            kafka:
+                condition: service_healthy
         ports:
             - "8080:8080"
         environment:
+            # Database
             DB_HOST: "postgres_db"
             DB_PORT: "5432"
             DB_NAME: "employee_db"
             DB_USER: "employee_user"
             DB_DRIVER_NAME: "postgres"
             DB_PASSWORD: "employeepw"
+            # Server
             SERVER_PORT: "8080"
             SERVER_HOST: "0.0.0.0"
-            OAUTH_ENABLED: "true"
             SERVER_SSL_ENABLED: "false"
             SERVER_SSL_CERT_FILE_PATH: "/dist/ssl/cert.pem"
             SERVER_SSL_KEY_FILE_PATH: "/dist/ssl/key.pem"
+            # OAuth
+            OAUTH_ENABLED: "true"
+            OAUTH_SIGNING_KEY: "00000000"
+            OAUTH_CLIENT_ID: "client"
+            OAUTH_CLIENT_SECRET: "password"
+            OAUTH_USER_ID: "000000"
+            OAUTH_USER_NAME: "user"
+            OAUTH_USER_PASSWORD: "secret"
+            # Kafka
+            KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+            KAFKA_CONSUMER_ENABLED: "true"
+            KAFKA_CONSUMER_GROUP_ID: "employee-group"
+            KAFKA_CONSUMER_EMPLOYEE_UPSERT_TOPIC: "employee-insert.v1"
+            KAFKA_CONSUMER_EMPLOYEE_UPDATE_TOPIC: "employee-update.v1"
+            KAFKA_CONSUMER_EMPLOYEE_DELETE_TOPIC: "employee-deletion.v1"
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthcheck/"]
+            interval: 10s
+            retries: 5
+            start_period: 20s
+            timeout: 5s
+
     postgres_db:
         image: postgres:latest
         restart: always
@@ -33,3 +56,36 @@ services:
             POSTGRES_DB: employee_db
             POSTGRES_USER: employee_user
             POSTGRES_PASSWORD: employeepw
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U employee_user -d employee_db"]
+            interval: 10s
+            retries: 5
+            start_period: 10s
+            timeout: 5s
+
+    zookeeper:
+        image: wurstmeister/zookeeper
+        container_name: zookeeper
+        ports:
+            - "2181:2181"
+
+    kafka:
+        image: wurstmeister/kafka
+        container_name: kafka
+        ports:
+            - "9092:9092"
+        depends_on:
+            - zookeeper
+        environment:
+            KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9093
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+            KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
+            KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_CREATE_TOPICS: "employee-upsert.v1:1:1,employee-insert.v1:1:1,employee-update.v1:1:1,employee-deletion.v1:1:1"
+        healthcheck:
+            test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+            interval: 10s
+            retries: 5
+            start_period: 20s
+            timeout: 10s
