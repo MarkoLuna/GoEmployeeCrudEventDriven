@@ -221,19 +221,19 @@ func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
 	var allMessages []*kafka.Message
 	for i := 0; i < 6; i++ {
 		allMessages = append(allMessages, &kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &topicInsert},
+			TopicPartition: kafka.TopicPartition{Topic: &topicInsert, Partition: 0, Offset: kafka.Offset(i)},
 			Value:          insertBytes,
 		})
 	}
 	for i := 0; i < 4; i++ {
 		allMessages = append(allMessages, &kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &topicUpdate},
+			TopicPartition: kafka.TopicPartition{Topic: &topicUpdate, Partition: 0, Offset: kafka.Offset(i)},
 			Value:          updateBytes,
 		})
 	}
 	for i := 0; i < 2; i++ {
 		allMessages = append(allMessages, &kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &topicDelete},
+			TopicPartition: kafka.TopicPartition{Topic: &topicDelete, Partition: 0, Offset: kafka.Offset(i)},
 			Value:          []byte("123"),
 		})
 	}
@@ -276,5 +276,70 @@ func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
 	assert.Equal(t, int32(4), atomic.LoadInt32(&updateCount), "all 4 update messages should be processed")
 	assert.Equal(t, int32(2), atomic.LoadInt32(&deleteCount), "all 2 delete messages should be processed")
 }
+
+func TestKafkaConsumerService_Listen_RetriesOnTransientError(t *testing.T) {
+	mockConsumer := new(MockKafkaConsumer)
+	mockEmployeeService := new(MockEmployeeService)
+
+	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
+	os.Setenv("KAFKA_CONSUMER_MAX_RETRIES", "3")
+	os.Setenv("KAFKA_CONSUMER_RETRY_INITIAL_BACKOFF_MS", "1") // Fast retry for tests
+	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
+	defer os.Unsetenv("KAFKA_CONSUMER_MAX_RETRIES")
+	defer os.Unsetenv("KAFKA_CONSUMER_RETRY_INITIAL_BACKOFF_MS")
+
+	employeeRequest := dto.EmployeeRequest{FirstName: "Retry"}
+	topicInsert := "employee-insert.v1"
+	msgInsert := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topicInsert, Partition: 0, Offset: 1},
+		Value:          createEmployeeMessageBytes(t, "", employeeRequest),
+	}
+
+	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
+	mockConsumer.On("ReadMessage", mock.Anything).Return(msgInsert, nil).Once()
+	mockConsumer.On("ReadMessage", mock.Anything).Return(nil, errors.New("stop loop")).Once()
+
+	// Fail twice, succeed on third attempt
+	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(nil, errors.New("transient error")).Twice()
+	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(&models.Employee{Id: "retry-id"}, nil).Once()
+
+	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, mockEmployeeService)
+	err := kafkaConsumerService.Listen()
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "stop loop")
+	mockEmployeeService.AssertExpectations(t)
+}
+
+func TestKafkaConsumerService_Listen_SkipsDuplicateMessages(t *testing.T) {
+	mockConsumer := new(MockKafkaConsumer)
+	mockEmployeeService := new(MockEmployeeService)
+
+	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
+	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
+
+	employeeRequest := dto.EmployeeRequest{FirstName: "Duplicate"}
+	topicInsert := "employee-insert.v1"
+	msg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topicInsert, Partition: 0, Offset: 100},
+		Value:          createEmployeeMessageBytes(t, "", employeeRequest),
+	}
+
+	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
+	// Deliver the SAME message twice
+	mockConsumer.On("ReadMessage", mock.Anything).Return(msg, nil).Twice()
+	mockConsumer.On("ReadMessage", mock.Anything).Return(nil, errors.New("stop loop")).Once()
+
+	// Should only be called ONCE
+	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(&models.Employee{Id: "id"}, nil).Once()
+
+	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, mockEmployeeService)
+	err := kafkaConsumerService.Listen()
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "stop loop")
+	mockEmployeeService.AssertExpectations(t)
+}
+
 
 

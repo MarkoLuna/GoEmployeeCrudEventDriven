@@ -31,11 +31,14 @@ type KafkaConsumer interface {
 // KafkaConsumerServiceImpl fans each Kafka topic out to its own dedicated
 // worker pool so insert, update and delete workloads scale independently.
 type KafkaConsumerServiceImpl struct {
-	consumer           KafkaConsumer
-	employeeService    services.EmployeeService
-	insertWorkerCount  int
-	updateWorkerCount  int
-	deleteWorkerCount  int
+	consumer            KafkaConsumer
+	employeeService      services.EmployeeService
+	insertWorkerCount   int
+	updateWorkerCount   int
+	deleteWorkerCount   int
+	retryMaxAttempts    int
+	retryInitialBackoff time.Duration
+	processedKeys       sync.Map // key: "topic:partition:offset" → struct{}
 }
 
 func NewKafkaConsumerService(
@@ -43,11 +46,13 @@ func NewKafkaConsumerService(
 	employeeService services.EmployeeService,
 ) services.KafkaConsumerService {
 	return &KafkaConsumerServiceImpl{
-		consumer:          kafkaConsumer,
-		employeeService:   employeeService,
-		insertWorkerCount: utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_INSERT", 3),
-		updateWorkerCount: utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_UPDATE", 3),
-		deleteWorkerCount: utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_DELETE", 3),
+		consumer:            kafkaConsumer,
+		employeeService:     employeeService,
+		insertWorkerCount:   utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_INSERT", 3),
+		updateWorkerCount:   utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_UPDATE", 3),
+		deleteWorkerCount:   utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_DELETE", 3),
+		retryMaxAttempts:    utils.ParseIntEnv("KAFKA_CONSUMER_MAX_RETRIES", 3),
+		retryInitialBackoff: time.Duration(utils.ParseIntEnv("KAFKA_CONSUMER_RETRY_INITIAL_BACKOFF_MS", 500)) * time.Millisecond,
 	}
 }
 
@@ -57,6 +62,36 @@ func isConsumerEnabled() bool {
 	enabled := utils.ParseBoolEnv("KAFKA_CONSUMER_ENABLED", true)
 	log.Printf("Consumer enabled: %v", enabled)
 	return enabled
+}
+
+func messageKey(msg *kafka.Message) string {
+	topic := ""
+	if msg.TopicPartition.Topic != nil {
+		topic = *msg.TopicPartition.Topic
+	}
+	return fmt.Sprintf("%s:%d:%d", topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+}
+
+func (kSrv *KafkaConsumerServiceImpl) withRetry(fn func() error) error {
+	maxAttempts := kSrv.retryMaxAttempts
+	backoff := kSrv.retryInitialBackoff
+
+	for i := 0; i < maxAttempts; i++ {
+		err := fn()
+		if err == nil {
+			return nil
+		}
+		if i == maxAttempts-1 {
+			return err
+		}
+		log.Printf("Retry attempt %d/%d failed: %v. Retrying in %v", i+1, maxAttempts, err, backoff)
+		time.Sleep(backoff)
+		backoff *= 2
+		if backoff > 30*time.Second {
+			backoff = 30 * time.Second
+		}
+	}
+	return nil
 }
 
 // startWorkerPool launches n goroutines that each drain ch by calling handler.
@@ -141,50 +176,88 @@ func (kSrv *KafkaConsumerServiceImpl) Listen() error {
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
 func (kSrv *KafkaConsumerServiceImpl) handleInsert(msg *kafka.Message) {
+	key := messageKey(msg)
+	if _, loaded := kSrv.processedKeys.LoadOrStore(key, struct{}{}); loaded {
+		log.Printf("Message with key %s already being processed or already processed, skipping", key)
+		return
+	}
+
 	var employeeMessage dto.EmployeeMessage
 	err := json.Unmarshal(msg.Value, &employeeMessage)
 	if err != nil {
-		log.Printf("Error decoding insert message: %v", err)
+		log.Printf("Error decoding insert message (not retried): %v", err)
+		kSrv.processedKeys.Delete(key) // Unblock after permanent error
 		return
 	}
 
 	fmt.Printf("Received Employee for creation: %v\n", employeeMessage)
-	created, err := kSrv.employeeService.CreateEmployee(employeeMessage.EmployeeInfo)
-	if err != nil {
-		log.Printf("error creating employee %v: %v", employeeMessage, err)
-		return
-	}
+	err = kSrv.withRetry(func() error {
+		created, err := kSrv.employeeService.CreateEmployee(employeeMessage.EmployeeInfo)
+		if err != nil {
+			return err
+		}
+		log.Printf("employee created successfully with id: %s", created.Id)
+		return nil
+	})
 
-	log.Printf("employee created successfully with id: %s", created.Id)
+	if err != nil {
+		log.Printf("Final failure creating employee after retries: %v", err)
+		kSrv.processedKeys.Delete(key) // Unblock after final transient failure
+	}
 }
 
 func (kSrv *KafkaConsumerServiceImpl) handleUpdate(msg *kafka.Message) {
+	key := messageKey(msg)
+	if _, loaded := kSrv.processedKeys.LoadOrStore(key, struct{}{}); loaded {
+		log.Printf("Message with key %s already being processed or already processed, skipping", key)
+		return
+	}
+
 	var employeeMessage dto.EmployeeMessage
 	err := json.Unmarshal(msg.Value, &employeeMessage)
 	if err != nil {
-		log.Printf("Error decoding update message: %v", err)
+		log.Printf("Error decoding update message (not retried): %v", err)
+		kSrv.processedKeys.Delete(key) // Unblock after permanent error
 		return
 	}
 
 	fmt.Printf("Received Employee for update: %v\n", employeeMessage)
-	updated, err := kSrv.employeeService.UpdateEmployee(employeeMessage.ID, employeeMessage.EmployeeInfo)
-	if err != nil {
-		log.Printf("error updating employee %v: %v", employeeMessage, err)
-		return
-	}
+	err = kSrv.withRetry(func() error {
+		updated, err := kSrv.employeeService.UpdateEmployee(employeeMessage.ID, employeeMessage.EmployeeInfo)
+		if err != nil {
+			return err
+		}
+		log.Printf("employee updated successfully with id: %s", updated.Id)
+		return nil
+	})
 
-	log.Printf("employee updated successfully with id: %s", updated.Id)
+	if err != nil {
+		log.Printf("Final failure updating employee after retries: %v", err)
+		kSrv.processedKeys.Delete(key) // Unblock after final transient failure
+	}
 }
 
 func (kSrv *KafkaConsumerServiceImpl) handleDelete(msg *kafka.Message) {
-	employeeId := string(msg.Value)
-	fmt.Printf("Received Employee for deletion: %s\n", employeeId)
-
-	err := kSrv.employeeService.DeleteEmployeeById(employeeId)
-	if err != nil {
-		log.Printf("error deleting [employeeId: %s] error: %s", employeeId, err)
+	key := messageKey(msg)
+	if _, loaded := kSrv.processedKeys.LoadOrStore(key, struct{}{}); loaded {
+		log.Printf("Message with key %s already being processed or already processed, skipping", key)
 		return
 	}
 
-	log.Printf("employee deleted successfully with id: %s", employeeId)
+	employeeId := string(msg.Value)
+	fmt.Printf("Received Employee for deletion: %s\n", employeeId)
+
+	err := kSrv.withRetry(func() error {
+		err := kSrv.employeeService.DeleteEmployeeById(employeeId)
+		if err != nil {
+			return err
+		}
+		log.Printf("employee deleted successfully with id: %s", employeeId)
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Final failure deleting employee after retries: %v", err)
+		kSrv.processedKeys.Delete(key) // Unblock after final transient failure
+	}
 }
