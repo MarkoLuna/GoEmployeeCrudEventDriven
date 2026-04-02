@@ -1,0 +1,20 @@
+meta {
+  name: Get User Info
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8080/oauth/userinfo
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: {{auth_type}} {{auth_token}}
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Login Local User
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/oauth/token
+  body: multipartForm
+  auth: inherit
+}
+
+headers {
+  authorization: Basic Y2xpZW50OnBhc3N3b3Jk
+  content-type: multipart/form-data
+  Content-Type: multipart/form-data
+}
+
+body:multipart-form {
+  password: secret
+  username: user
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}
