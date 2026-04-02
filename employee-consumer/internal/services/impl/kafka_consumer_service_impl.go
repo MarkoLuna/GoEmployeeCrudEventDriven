@@ -17,8 +17,8 @@ import (
 // TODO add policy retry
 
 var (
-	employeeInsertTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPSERT_TOPIC", "employee-insert.v1")
-	employeeUpdateTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPSERT_TOPIC", "employee-update.v1")
+	employeeInsertTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_INSERT_TOPIC", "employee-insert.v1")
+	employeeUpdateTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPDATE_TOPIC", "employee-update.v1")
 	employeeDeleteTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
 )
 
@@ -37,7 +37,7 @@ type KafkaConsumerServiceImpl struct {
 func NewKafkaConsumerService(
 	kafkaConsumer KafkaConsumer,
 	employeeService services.EmployeeService) services.KafkaConsumerService {
-	return KafkaConsumerServiceImpl{
+	return &KafkaConsumerServiceImpl{
 		consumer:        kafkaConsumer,
 		employeeService: employeeService,
 	}
@@ -50,102 +50,89 @@ func isConsumerEnabled() bool {
 	return consumers_enabled
 }
 
-func (kSrv KafkaConsumerServiceImpl) ListenEmployeeInsert() error {
+func (kSrv *KafkaConsumerServiceImpl) Listen() error {
+	if !isConsumerEnabled() {
+		return nil
+	}
 
-	if isConsumerEnabled() {
-		log.Printf("Listening for employee insert on topic: %s", employeeInsertTopic)
-		kSrv.consumer.SubscribeTopics([]string{employeeInsertTopic}, nil)
+	topics := []string{employeeInsertTopic, employeeUpdateTopic, employeeDeleteTopic}
+	log.Printf("Listening for employee events on topics: %v", topics)
 
-		for {
-			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
-			if err == nil {
-				log.Printf("Received message: %v\n", msg)
-				var employeeMessage dto.EmployeeMessage
-				err := json.Unmarshal(msg.Value, &employeeMessage)
-				if err != nil {
-					fmt.Printf("Error decoding message: %v\n", err)
-					continue
-				}
+	err := kSrv.consumer.SubscribeTopics(topics, nil)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to topics: %w", err)
+	}
 
-				fmt.Printf("Received Employee for creation: %v\n", employeeMessage)
-				created, err := kSrv.employeeService.CreateEmployee(employeeMessage.EmployeeInfo)
-				if err != nil {
-					log.Printf("error creating employee %v", employeeMessage)
-					continue
-				}
+	for {
+		msg, err := kSrv.consumer.ReadMessage(-1)
+		if err != nil {
+			return fmt.Errorf("error reading message: %w", err)
+		}
 
-				log.Printf("employee created successfully with id: %s", created.Id)
-			} else {
-				log.Printf("error reading message: %v", err)
-				continue
-			}
+		if msg == nil {
+			continue
+		}
+
+		log.Printf("Received message from topic %s: %s", *msg.TopicPartition.Topic, string(msg.Value))
+
+		switch *msg.TopicPartition.Topic {
+		case employeeInsertTopic:
+			kSrv.handleInsert(msg)
+		case employeeUpdateTopic:
+			kSrv.handleUpdate(msg)
+		case employeeDeleteTopic:
+			kSrv.handleDelete(msg)
+		default:
+			log.Printf("received message from unknown topic: %s", *msg.TopicPartition.Topic)
 		}
 	}
-	return nil
 }
 
-func (kSrv KafkaConsumerServiceImpl) ListenEmployeeUpdate() error {
-
-	if isConsumerEnabled() {
-		log.Printf("Listening for employee update on topic: %s", employeeUpdateTopic)
-		kSrv.consumer.SubscribeTopics([]string{employeeUpdateTopic}, nil)
-
-		for {
-			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
-			if err == nil {
-				log.Printf("Received message: %v\n", msg)
-				var employeeMessage dto.EmployeeMessage
-				err := json.Unmarshal(msg.Value, &employeeMessage)
-				if err != nil {
-					fmt.Printf("Error decoding message: %v\n", err)
-					continue
-				}
-
-				fmt.Printf("Received Employee for update: %v\n", employeeMessage)
-				updated, err := kSrv.employeeService.UpdateEmployee(employeeMessage.ID,
-					employeeMessage.EmployeeInfo)
-				if err != nil {
-					log.Printf("error updating employee %v", employeeMessage)
-					continue
-				}
-
-				log.Printf("employee updated successfully with id: %s", updated.Id)
-				continue
-			} else {
-				log.Printf("error reading message: %v", err)
-				continue
-			}
-		}
+func (kSrv *KafkaConsumerServiceImpl) handleInsert(msg *kafka.Message) {
+	var employeeMessage dto.EmployeeMessage
+	err := json.Unmarshal(msg.Value, &employeeMessage)
+	if err != nil {
+		log.Printf("Error decoding insert message: %v", err)
+		return
 	}
-	return nil
+
+	fmt.Printf("Received Employee for creation: %v\n", employeeMessage)
+	created, err := kSrv.employeeService.CreateEmployee(employeeMessage.EmployeeInfo)
+	if err != nil {
+		log.Printf("error creating employee %v: %v", employeeMessage, err)
+		return
+	}
+
+	log.Printf("employee created successfully with id: %s", created.Id)
 }
 
-func (kSrv KafkaConsumerServiceImpl) ListenEmployeeDeletion() error {
-
-	if isConsumerEnabled() {
-		log.Printf("Listening for employee deletion on topic: %s", employeeDeleteTopic)
-		kSrv.consumer.SubscribeTopics([]string{employeeDeleteTopic}, nil)
-
-		for {
-			msg, err := kSrv.consumer.ReadMessage(time.Duration(-1))
-			if err == nil {
-				log.Printf("Received message: %v\n", msg)
-				var employeeId string = string(msg.Value)
-
-				fmt.Printf("Received Employee for deletion: %s\n", employeeId)
-				err := kSrv.employeeService.DeleteEmployeeById(employeeId)
-				if err != nil {
-					log.Printf("error deleting [employeeId: %s] error: %s", employeeId, err)
-					continue
-				}
-
-				log.Printf("employee deleted successfully with id: %s", employeeId)
-				continue
-			} else {
-				log.Printf("error reading message: %v", err)
-				continue
-			}
-		}
+func (kSrv *KafkaConsumerServiceImpl) handleUpdate(msg *kafka.Message) {
+	var employeeMessage dto.EmployeeMessage
+	err := json.Unmarshal(msg.Value, &employeeMessage)
+	if err != nil {
+		log.Printf("Error decoding update message: %v", err)
+		return
 	}
-	return nil
+
+	fmt.Printf("Received Employee for update: %v\n", employeeMessage)
+	updated, err := kSrv.employeeService.UpdateEmployee(employeeMessage.ID, employeeMessage.EmployeeInfo)
+	if err != nil {
+		log.Printf("error updating employee %v: %v", employeeMessage, err)
+		return
+	}
+
+	log.Printf("employee updated successfully with id: %s", updated.Id)
+}
+
+func (kSrv *KafkaConsumerServiceImpl) handleDelete(msg *kafka.Message) {
+	employeeId := string(msg.Value)
+	fmt.Printf("Received Employee for deletion: %s\n", employeeId)
+
+	err := kSrv.employeeService.DeleteEmployeeById(employeeId)
+	if err != nil {
+		log.Printf("error deleting [employeeId: %s] error: %s", employeeId, err)
+		return
+	}
+
+	log.Printf("employee deleted successfully with id: %s", employeeId)
 }

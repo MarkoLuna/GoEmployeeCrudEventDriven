@@ -86,7 +86,7 @@ func TestFindById(t *testing.T) {
 	url := fmt.Sprintf("%s/api/employee/%s", basePath, e.Id)
 	resp, err := makeRequest("GET", url, nil)
 	if err != nil {
-		fmt.Errorf("Error information: %s", err.Error())
+		log.Printf("Error information: %s", err.Error())
 		assert.NoError(t, err)
 		return
 	}
@@ -122,7 +122,7 @@ func TestFindAll(t *testing.T) {
 	url := fmt.Sprintf("%s/api/employee/", basePath)
 	resp, err := makeRequest("GET", url, nil)
 	if err != nil {
-		fmt.Errorf("Error information: %s", err.Error())
+		log.Printf("Error information: %s", err.Error())
 		assert.NoError(t, err)
 		return
 	}
@@ -143,7 +143,7 @@ func makeRequest(httpMethod string, url string, body io.Reader) (*http.Response,
 	req, err := http.NewRequest(httpMethod, url, body)
 
 	if err != nil {
-		fmt.Errorf("Error information: %s", err.Error())
+		log.Printf("Error information: %s", err.Error())
 		return nil, err
 	}
 

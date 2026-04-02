@@ -88,7 +88,5 @@ func ConfigureApp() {
 
 	App.LoadConfiguration()
 
-	go App.EmployeeKafkaConsumerService.ListenEmployeeInsert()
-	go App.EmployeeKafkaConsumerService.ListenEmployeeUpdate()
-	go App.EmployeeKafkaConsumerService.ListenEmployeeDeletion()
+	go App.EmployeeKafkaConsumerService.Listen()
 }
