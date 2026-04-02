@@ -30,6 +30,9 @@ services:
       SERVER_SSL_ENABLED: "false"
       SERVER_SSL_CERT_FILE_PATH: "/dist/ssl/cert.pem"
       SERVER_SSL_KEY_FILE_PATH: "/dist/ssl/key.pem"
+      OAUTH_PROVIDER: "keycloak"
+      KEYCLOAK_AUTH_SERVER_URL: "http://ws-keycloak-x:8080"
+      KEYCLOAK_REALM: "dev"
     healthcheck:
       test: curl --fail http://localhost:8080/actuator/health || exit 1
       interval: 5s
@@ -60,6 +63,9 @@ services:
       SERVER_SSL_ENABLED: "false"
       SERVER_SSL_CERT_FILE_PATH: "/dist/ssl/cert.pem"
       SERVER_SSL_KEY_FILE_PATH: "/dist/ssl/key.pem"
+      OAUTH_PROVIDER: "keycloak"
+      KEYCLOAK_AUTH_SERVER_URL: "http://ws-keycloak-x:8080"
+      KEYCLOAK_REALM: "dev"
     healthcheck:
       test: curl --fail http://localhost:8080/actuator/health || exit 1
       interval: 5s

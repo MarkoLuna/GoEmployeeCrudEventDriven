@@ -19,14 +19,14 @@ var (
 	signingKey = utils.GetEnv("OAUTH_SIGNING_KEY", "00000000")
 )
 
-type OAuthService struct {
+type LocalOAuthServiceImpl struct {
 }
 
-func NewOAuthService() OAuthService {
-	return OAuthService{}
+func NewLocalOAuthService() *LocalOAuthServiceImpl {
+	return &LocalOAuthServiceImpl{}
 }
 
-func (eSrv OAuthService) HandleTokenGeneration(clientId string, clientSecret string, userId string) (dto.JWTResponse, error) {
+func (eSrv *LocalOAuthServiceImpl) HandleTokenGeneration(clientId string, clientSecret string, userId string) (dto.JWTResponse, error) {
 
 	data := &oauth2.GenerateBasic{
 		Client: &models.Client{
@@ -58,7 +58,7 @@ func (eSrv OAuthService) HandleTokenGeneration(clientId string, clientSecret str
 	return jWTResponse, nil
 }
 
-func (oauthService OAuthService) ParseToken(accessToken string) (*jwt.Token, error) {
+func (oauthService *LocalOAuthServiceImpl) ParseToken(accessToken string) (*jwt.Token, error) {
 
 	token, err := jwt.ParseWithClaims(accessToken, &generates.JWTAccessClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -73,7 +73,7 @@ func (oauthService OAuthService) ParseToken(accessToken string) (*jwt.Token, err
 	return token, nil
 }
 
-func (oauthService OAuthService) GetTokenClaims(accessToken string) (map[string]string, error) {
+func (oauthService *LocalOAuthServiceImpl) GetTokenClaims(accessToken string) (map[string]string, error) {
 
 	token, err := oauthService.ParseToken(accessToken)
 	if err != nil {
@@ -94,13 +94,13 @@ func (oauthService OAuthService) GetTokenClaims(accessToken string) (map[string]
 	return dataMap, nil
 }
 
-func (oauthService OAuthService) IsAuthenticated(c echo.Context) (bool, error) {
+func (oauthService *LocalOAuthServiceImpl) IsAuthenticated(c echo.Context) (bool, error) {
 	accessToken, _ := utils.GetBearerAuth(c.Request().Header)
 	ok, err := oauthService.IsValidToken(accessToken)
-	return ok && err != nil, err
+	return ok && err == nil, err
 }
 
-func (oauthService OAuthService) IsValidToken(accessToken string) (bool, error) {
+func (oauthService *LocalOAuthServiceImpl) IsValidToken(accessToken string) (bool, error) {
 
 	// Parse and verify jwt access token
 	token, err := jwt.ParseWithClaims(accessToken, &generates.JWTAccessClaims{}, func(t *jwt.Token) (interface{}, error) {
@@ -119,3 +119,4 @@ func (oauthService OAuthService) IsValidToken(accessToken string) (bool, error) 
 	}
 	return true, nil
 }
+
