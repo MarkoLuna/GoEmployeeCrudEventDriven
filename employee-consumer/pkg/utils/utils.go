@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strconv"
 )
 
 func ParseBody(body io.Reader, x interface{}) {
@@ -25,4 +26,22 @@ func GetEnv(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func ParseIntEnv(key string, defaultVal int) int {
+	raw := GetEnv(key, strconv.Itoa(defaultVal))
+	val, err := strconv.Atoi(raw)
+	if err != nil || val <= 0 {
+		return defaultVal
+	}
+	return val
+}
+
+func ParseBoolEnv(key string, defaultVal bool) bool {
+	raw := GetEnv(key, strconv.FormatBool(defaultVal))
+	val, err := strconv.ParseBool(raw)
+	if err != nil {
+		return defaultVal
+	}
+	return val
 }

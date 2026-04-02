@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -192,3 +193,88 @@ func TestKafkaConsumerService_Listen_ContinuesOnIndividualErrors(t *testing.T) {
 
 	mockEmployeeService.AssertNotCalled(t, "CreateEmployee")
 }
+
+func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
+	mockConsumer := new(MockKafkaConsumer)
+	mockEmployeeService := new(MockEmployeeService)
+
+	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
+	// Each topic gets its own worker pool size.
+	os.Setenv("KAFKA_CONSUMER_MAX_WORKERS_INSERT", "3")
+	os.Setenv("KAFKA_CONSUMER_MAX_WORKERS_UPDATE", "2")
+	os.Setenv("KAFKA_CONSUMER_MAX_WORKERS_DELETE", "1")
+	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
+	defer os.Unsetenv("KAFKA_CONSUMER_MAX_WORKERS_INSERT")
+	defer os.Unsetenv("KAFKA_CONSUMER_MAX_WORKERS_UPDATE")
+	defer os.Unsetenv("KAFKA_CONSUMER_MAX_WORKERS_DELETE")
+
+	employeeRequest := dto.EmployeeRequest{FirstName: "John"}
+
+	topicInsert := "employee-insert.v1"
+	topicUpdate := "employee-update.v1"
+	topicDelete := "employee-deletion.v1"
+
+	insertBytes := createEmployeeMessageBytes(t, "", employeeRequest)
+	updateBytes := createEmployeeMessageBytes(t, "123", employeeRequest)
+
+	// 6 insert, 4 update, 2 delete = 12 total messages.
+	var allMessages []*kafka.Message
+	for i := 0; i < 6; i++ {
+		allMessages = append(allMessages, &kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topicInsert},
+			Value:          insertBytes,
+		})
+	}
+	for i := 0; i < 4; i++ {
+		allMessages = append(allMessages, &kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topicUpdate},
+			Value:          updateBytes,
+		})
+	}
+	for i := 0; i < 2; i++ {
+		allMessages = append(allMessages, &kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topicDelete},
+			Value:          []byte("123"),
+		})
+	}
+
+	var msgIndex int32
+
+	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
+	mockConsumer.ReadMessageFunc = func(timeout time.Duration) (*kafka.Message, error) {
+		idx := atomic.AddInt32(&msgIndex, 1) - 1
+		if int(idx) < len(allMessages) {
+			return allMessages[idx], nil
+		}
+		return nil, errors.New("stop loop")
+	}
+
+	var insertCount, updateCount, deleteCount int32
+
+	mockEmployeeService.On("CreateEmployee", employeeRequest).
+		Return(&models.Employee{Id: "123"}, nil).
+		Run(func(args mock.Arguments) { atomic.AddInt32(&insertCount, 1) })
+
+	mockEmployeeService.On("UpdateEmployee", "123", employeeRequest).
+		Return(&models.Employee{Id: "123"}, nil).
+		Run(func(args mock.Arguments) { atomic.AddInt32(&updateCount, 1) })
+
+	mockEmployeeService.On("DeleteEmployeeById", "123").
+		Return(nil).
+		Run(func(args mock.Arguments) { atomic.AddInt32(&deleteCount, 1) })
+
+	kafkaConsumerService := NewKafkaConsumerService(
+		mockConsumer,
+		mockEmployeeService,
+	)
+
+	err := kafkaConsumerService.Listen()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "stop loop")
+
+	assert.Equal(t, int32(6), atomic.LoadInt32(&insertCount), "all 6 insert messages should be processed")
+	assert.Equal(t, int32(4), atomic.LoadInt32(&updateCount), "all 4 update messages should be processed")
+	assert.Equal(t, int32(2), atomic.LoadInt32(&deleteCount), "all 2 delete messages should be processed")
+}
+
+

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
+	"sync"
 	"time"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
@@ -13,7 +13,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-// TODO add concurrency
 // TODO add policy retry
 
 var (
@@ -29,26 +28,61 @@ type KafkaConsumer interface {
 	Close() error
 }
 
+// KafkaConsumerServiceImpl fans each Kafka topic out to its own dedicated
+// worker pool so insert, update and delete workloads scale independently.
 type KafkaConsumerServiceImpl struct {
-	consumer        KafkaConsumer
-	employeeService services.EmployeeService
+	consumer           KafkaConsumer
+	employeeService    services.EmployeeService
+	insertWorkerCount  int
+	updateWorkerCount  int
+	deleteWorkerCount  int
 }
 
 func NewKafkaConsumerService(
 	kafkaConsumer KafkaConsumer,
-	employeeService services.EmployeeService) services.KafkaConsumerService {
+	employeeService services.EmployeeService,
+) services.KafkaConsumerService {
 	return &KafkaConsumerServiceImpl{
-		consumer:        kafkaConsumer,
-		employeeService: employeeService,
+		consumer:          kafkaConsumer,
+		employeeService:   employeeService,
+		insertWorkerCount: utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_INSERT", 3),
+		updateWorkerCount: utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_UPDATE", 3),
+		deleteWorkerCount: utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_DELETE", 3),
 	}
 }
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+
 func isConsumerEnabled() bool {
-	enabled := utils.GetEnv("KAFKA_CONSUMER_ENABLED", "true")
-	log.Printf("Consumer enabled: %s", enabled)
-	consumers_enabled, _ := strconv.ParseBool(enabled)
-	return consumers_enabled
+	enabled := utils.ParseBoolEnv("KAFKA_CONSUMER_ENABLED", true)
+	log.Printf("Consumer enabled: %v", enabled)
+	return enabled
 }
+
+// startWorkerPool launches n goroutines that each drain ch by calling handler.
+// Each worker logs its topic and ID on start/stop. The WaitGroup is decremented
+// when a worker exits so the caller can wait for full drain after closing ch.
+func startWorkerPool(
+	wg *sync.WaitGroup,
+	topic string,
+	n int,
+	ch <-chan *kafka.Message,
+	handler func(*kafka.Message),
+) {
+	for i := 1; i <= n; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			log.Printf("[%s] worker %d started", topic, workerID)
+			for msg := range ch {
+				handler(msg)
+			}
+			log.Printf("[%s] worker %d stopped", topic, workerID)
+		}(i)
+	}
+}
+
+// ── Listen ───────────────────────────────────────────────────────────────────
 
 func (kSrv *KafkaConsumerServiceImpl) Listen() error {
 	if !isConsumerEnabled() {
@@ -56,37 +90,55 @@ func (kSrv *KafkaConsumerServiceImpl) Listen() error {
 	}
 
 	topics := []string{employeeInsertTopic, employeeUpdateTopic, employeeDeleteTopic}
-	log.Printf("Listening for employee events on topics: %v", topics)
+	log.Printf(
+		"Listening on topics: %v (insert workers: %d, update workers: %d, delete workers: %d)",
+		topics,
+		kSrv.insertWorkerCount, kSrv.updateWorkerCount, kSrv.deleteWorkerCount,
+	)
 
-	err := kSrv.consumer.SubscribeTopics(topics, nil)
-	if err != nil {
+	if err := kSrv.consumer.SubscribeTopics(topics, nil); err != nil {
 		return fmt.Errorf("failed to subscribe to topics: %w", err)
 	}
+
+	// Per-topic buffered channels — buffer size equals worker count so the
+	// reader is never blocked longer than one in-flight message per worker.
+	insertCh := make(chan *kafka.Message, kSrv.insertWorkerCount)
+	updateCh := make(chan *kafka.Message, kSrv.updateWorkerCount)
+	deleteCh := make(chan *kafka.Message, kSrv.deleteWorkerCount)
+
+	var wg sync.WaitGroup
+	startWorkerPool(&wg, employeeInsertTopic, kSrv.insertWorkerCount, insertCh, kSrv.handleInsert)
+	startWorkerPool(&wg, employeeUpdateTopic, kSrv.updateWorkerCount, updateCh, kSrv.handleUpdate)
+	startWorkerPool(&wg, employeeDeleteTopic, kSrv.deleteWorkerCount, deleteCh, kSrv.handleDelete)
 
 	for {
 		msg, err := kSrv.consumer.ReadMessage(-1)
 		if err != nil {
+			close(insertCh)
+			close(updateCh)
+			close(deleteCh)
+			wg.Wait()
 			return fmt.Errorf("error reading message: %w", err)
 		}
 
-		if msg == nil {
+		if msg == nil || msg.TopicPartition.Topic == nil {
 			continue
 		}
 
-		log.Printf("Received message from topic %s: %s", *msg.TopicPartition.Topic, string(msg.Value))
-
 		switch *msg.TopicPartition.Topic {
 		case employeeInsertTopic:
-			kSrv.handleInsert(msg)
+			insertCh <- msg
 		case employeeUpdateTopic:
-			kSrv.handleUpdate(msg)
+			updateCh <- msg
 		case employeeDeleteTopic:
-			kSrv.handleDelete(msg)
+			deleteCh <- msg
 		default:
 			log.Printf("received message from unknown topic: %s", *msg.TopicPartition.Topic)
 		}
 	}
 }
+
+// ── Handlers ─────────────────────────────────────────────────────────────────
 
 func (kSrv *KafkaConsumerServiceImpl) handleInsert(msg *kafka.Message) {
 	var employeeMessage dto.EmployeeMessage

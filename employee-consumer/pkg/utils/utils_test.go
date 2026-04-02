@@ -106,3 +106,76 @@ func TestParseBodyWithValidData(t *testing.T) {
 	}
 
 }
+
+func TestParseIntEnv(t *testing.T) {
+	t.Run("DefaultValueWhenUnset", func(t *testing.T) {
+		val := ParseIntEnv("UNSET_INT_VAR", 42)
+		if val != 42 {
+			t.Errorf("expected 42, got %d", val)
+		}
+	})
+
+	t.Run("ValueFromEnv", func(t *testing.T) {
+		os.Setenv("SET_INT_VAR", "100")
+		defer os.Unsetenv("SET_INT_VAR")
+		val := ParseIntEnv("SET_INT_VAR", 42)
+		if val != 100 {
+			t.Errorf("expected 100, got %d", val)
+		}
+	})
+
+	t.Run("DefaultValueOnInvalidEnv", func(t *testing.T) {
+		os.Setenv("INVALID_INT_VAR", "not-an-int")
+		defer os.Unsetenv("INVALID_INT_VAR")
+		val := ParseIntEnv("INVALID_INT_VAR", 42)
+		if val != 42 {
+			t.Errorf("expected 42, got %d", val)
+		}
+	})
+
+	t.Run("DefaultValueOnNonPositiveInt", func(t *testing.T) {
+		os.Setenv("ZERO_INT_VAR", "0")
+		defer os.Unsetenv("ZERO_INT_VAR")
+		val := ParseIntEnv("ZERO_INT_VAR", 42)
+		if val != 42 {
+			t.Errorf("expected 42, got %d", val)
+		}
+	})
+}
+
+func TestParseBoolEnv(t *testing.T) {
+	t.Run("DefaultValueWhenUnset", func(t *testing.T) {
+		val := ParseBoolEnv("UNSET_BOOL_VAR", true)
+		if val != true {
+			t.Errorf("expected true, got %v", val)
+		}
+	})
+
+	t.Run("ValueFromEnvTrue", func(t *testing.T) {
+		os.Setenv("SET_BOOL_VAR", "true")
+		defer os.Unsetenv("SET_BOOL_VAR")
+		val := ParseBoolEnv("SET_BOOL_VAR", false)
+		if val != true {
+			t.Errorf("expected true, got %v", val)
+		}
+	})
+
+	t.Run("ValueFromEnvFalse", func(t *testing.T) {
+		os.Setenv("SET_BOOL_VAR", "false")
+		defer os.Unsetenv("SET_BOOL_VAR")
+		val := ParseBoolEnv("SET_BOOL_VAR", true)
+		if val != false {
+			t.Errorf("expected false, got %v", val)
+		}
+	})
+
+	t.Run("DefaultValueOnInvalidEnv", func(t *testing.T) {
+		os.Setenv("INVALID_BOOL_VAR", "not-a-bool")
+		defer os.Unsetenv("INVALID_BOOL_VAR")
+		val := ParseBoolEnv("INVALID_BOOL_VAR", true)
+		if val != true {
+			t.Errorf("expected true, got %v", val)
+		}
+	})
+}
+
