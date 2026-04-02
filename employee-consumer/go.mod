@@ -8,7 +8,6 @@ require (
 	github.com/go-oauth2/oauth2/v4 v4.4.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.6.0
-	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo-jwt/v4 v4.4.0
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/lib/pq v1.3.0
@@ -17,6 +16,8 @@ require (
 	github.com/swaggo/swag v1.16.3
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )
+
+require github.com/joho/godotenv v1.5.1 // indirect
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

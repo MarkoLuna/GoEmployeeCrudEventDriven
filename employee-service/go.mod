@@ -7,7 +7,6 @@ require (
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/go-oauth2/oauth2/v4 v4.4.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo-jwt/v4 v4.4.0
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/lib/pq v1.3.0
@@ -20,6 +19,7 @@ require (
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 )
 
 require (

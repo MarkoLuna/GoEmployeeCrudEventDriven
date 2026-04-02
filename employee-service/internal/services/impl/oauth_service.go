@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// TODO connect to keycloak
 var (
 	signingKey = utils.GetEnv("OAUTH_SIGNING_KEY", "00000000")
 )
@@ -119,4 +118,3 @@ func (oauthService *LocalOAuthServiceImpl) IsValidToken(accessToken string) (boo
 	}
 	return true, nil
 }
-

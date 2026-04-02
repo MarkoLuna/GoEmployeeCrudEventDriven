@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -21,7 +20,6 @@ import (
 
 	echoSwagger "github.com/swaggo/echo-swagger"
 
-	"github.com/joho/godotenv"
 )
 
 type Application struct {
@@ -39,7 +37,6 @@ type Application struct {
 }
 
 func (app *Application) LoadConfiguration() {
-	app.loadEnvValues()
 	config.EnableCORS(app.EchoInstance)
 
 	server_auth_enabled := utils.GetEnv("OAUTH_ENABLED", "false")
@@ -47,18 +44,6 @@ func (app *Application) LoadConfiguration() {
 	config.NewAuthConfig(app.EchoInstance, auth_enabled, config.DefaultSkippedPaths[:], app.OAuthService)
 }
 
-func (app *Application) loadEnvValues() {
-	if _, err := os.Stat(".env"); err == nil {
-		err := godotenv.Load(".env")
-		if err != nil {
-			log.Fatalf("Error loading .env file")
-		} else {
-			log.Println("app environment values loaded successfully")
-		}
-	} else {
-		log.Println("Unable to find the env file for load app environment values")
-	}
-}
 
 func (app *Application) Address() string {
 	port := utils.GetEnv("SERVER_PORT", "8080")

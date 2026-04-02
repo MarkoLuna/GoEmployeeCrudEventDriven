@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.15.1
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )

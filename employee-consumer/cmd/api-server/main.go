@@ -77,11 +77,14 @@ func ConfigureApp() {
 	App.UserService = services.NewUserService()
 
 	oauthProvider := utils.GetEnv("OAUTH_PROVIDER", "local")
+	log.Println("OAuth Provider: ", oauthProvider)
 	if oauthProvider == "keycloak" {
+		log.Println("Using Keycloak for OAuth")
 		authServerURL := utils.GetEnv("KEYCLOAK_AUTH_SERVER_URL", "http://localhost:8082")
 		realm := utils.GetEnv("KEYCLOAK_REALM", "dev")
 		App.OAuthService = auth.NewKeycloakOAuthService(authServerURL, realm)
 	} else {
+		log.Println("Using Local OAuth")
 		App.OAuthService = impl.NewLocalOAuthService()
 	}
 
