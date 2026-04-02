@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/controllers"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services/impl"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services/stubs"
 	"github.com/labstack/echo/v4"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 
 	"github.com/stretchr/testify/assert"

@@ -3,7 +3,7 @@ package stubs
 import (
 	"fmt"
 
-	"github.com/MarkoLuna/EmployeeService/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 )
 
 type KafkaProducerServiceStub struct {

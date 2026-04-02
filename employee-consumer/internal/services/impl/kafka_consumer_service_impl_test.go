@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/MarkoLuna/EmployeeService/internal/config"
-	"github.com/MarkoLuna/EmployeeService/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/stretchr/testify/assert"
 )
 

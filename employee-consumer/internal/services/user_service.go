@@ -3,7 +3,7 @@ package services
 import (
 	"errors"
 
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services"

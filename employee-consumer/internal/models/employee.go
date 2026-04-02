@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 )
 
 type Employee struct {

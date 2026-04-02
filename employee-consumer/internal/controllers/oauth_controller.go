@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services"
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/go-oauth2/oauth2/v4/errors"
 	"github.com/go-oauth2/oauth2/v4/server"
 

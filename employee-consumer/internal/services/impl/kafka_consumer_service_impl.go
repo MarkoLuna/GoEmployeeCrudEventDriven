@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services"
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/constants"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
 	"github.com/stretchr/testify/assert"
 )

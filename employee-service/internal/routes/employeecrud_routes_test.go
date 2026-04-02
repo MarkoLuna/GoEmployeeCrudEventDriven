@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
-	"github.com/MarkoLuna/EmployeeService/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
-	"github.com/MarkoLuna/EmployeeService/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"
 	"github.com/labstack/echo/v4"

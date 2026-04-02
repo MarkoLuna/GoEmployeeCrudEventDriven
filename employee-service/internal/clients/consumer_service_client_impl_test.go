@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MarkoLuna/EmployeeService/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeService/internal/models"
 	"github.com/stretchr/testify/assert"
 )

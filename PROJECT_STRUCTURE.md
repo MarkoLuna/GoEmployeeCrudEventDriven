@@ -1,55 +1,51 @@
-# Standard Go Project Layout
+# Project Structure - GoEmployeeCrudEventDriven
 
-The structure of a Go project varies based on complexity, but common conventions help organize code effectively, primarily using the
-cmd/, internal/, and pkg/ directories. 
+This repository follows a microservices architecture using the standard Go project layout, with a centralized shared module for core logic.
 
-## Core Directories
-A typical, production-ready Go project structure often looks like this:
+## Core Structure
 
 ```bash
-project-root/
-├── go.mod
-├── cmd/
-│   ├── api-server/
-│   │   └── main.go
-│   └── cli-tool/
-│       └── main.go
-├── internal/
-│   ├── auth/
-│   ├── handlers/
-│   ├── services/
-│   └── models/
-├── pkg/
-│   ├── logger/
-│   └── utils/
-├── configs/
-├── scripts/
-└── Makefile
+GoEmployeeCrudEventDriven/
+├── common/                # Shared module (DTOs, Utils, Auth)
+│   ├── constants/         # Shared constants (e.g., EmployeeStatus)
+│   ├── dto/               # Shared Data Transfer Objects
+│   ├── services/          # Shared service interfaces and implementations
+│   └── utils/             # Shared utility functions
+├── employee-service/      # Main CRUD microservice (Producer)
+│   ├── cmd/               # Entry points (api-server)
+│   ├── docs/              # Swagger documentation
+│   ├── internal/          # Private service logic (Controllers, Repositories)
+│   └── pkg/               # Publicly exportable packages (if any)
+├── employee-consumer/     # Background worker service (Consumer)
+│   ├── cmd/               # Entry points (api-server)
+│   ├── docs/              # Swagger documentation
+│   ├── internal/          # Private consumer logic (Kafka listeners)
+│   └── pkg/               # Publicly exportable packages (if any)
+├── docker/                # Dockerfiles and orchestration configs
+├── k8s/                   # Kubernetes manifests
+└── bruno-collection/      # API testing collection
 ```
- 
 
-- `cmd/`: Contains the main entry points for your application(s). Each sub-directory here holds a separate executable program, with its own main.go file declaring package main.
-- `internal/`: This directory is for private application and package code that should not be imported by other projects or modules. Go enforces this: the compiler disallows imports of any path containing the element "internal" if the importing code is outside the current module's tree. This is where most of your core business logic, handlers, and service implementations reside.
-- `pkg/`: This directory contains public, reusable packages that can be safely used by external applications/projects. If you intend for code to be imported by other Go modules, put it here; otherwise, use `internal/`.
-- `go.mod`: The module definition file, located in the project root, which defines the module name and manages dependencies. 
+## Module Definitions
 
-## Other Common Directories
+### `common/`
+The **Shared Source of Truth**. This is a standalone Go module containing code that must be consistent across all services. 
+- **Location**: `/common`
+- **Import Path**: `github.com/MarkoLuna/GoEmployeeCrudEventDriven/common`
 
-- `configs/`: Stores configuration files or configuration loading logic.
-- `scripts/`: Houses various scripts for building, deploying, or running project tasks (e.g., shell, Python scripts).
-- `tests/`: Contains extra test data or large integration tests, though most tests (*_test.go) usually live alongside the code they test.
-- `docs/`: Project documentation.
-- `Makefile`: Automates common developer tasks like building, running tests, or deployments with simple commands (e.g., make build, make test). 
+### `employee-service/`
+Responsible for the REST API and producing Kafka events when employees are created or updated.
+- **Internal Pattern**: Uses `controllers` -> `services` -> `repositories`.
+- **Integration**: Imports `common/dto` for request/response models.
+
+### `employee-consumer/`
+Responsible for consuming Kafka events and performing downstream processing (e.g., database synchronization, notifications).
+- **Internal Pattern**: Uses `listeners` and `handlers`.
+- **Integration**: Imports `common/dto` to ensure message compatibility with the producer.
 
 ## Key Principles
 
-- Simplicity first: For small projects or learning, a flat structure with a single `main.go` file is often sufficient. Don't over-engineer the structure initially; let it evolve with the project's complexity.
-- Avoid `src/`: Unlike some other languages (like Java), Go projects generally do not use a top-level `src` directory for all source code.
-- Organize by concern: Within `internal/` or `pkg/`, organize code into logical packages (directories) based on their functionality (e.g., `auth`, `database`, `metrics`).
-- Interfaces for decoupling: Use Go's interfaces and dependency injection to keep packages decoupled, which improves testability and maintainability, especially in larger applications. 
-
-For detailed, official guidance, refer to the [Organizing a Go module](https://go.dev/doc/modules/layout) documentation on the official Go website. 
-
-## Other sources
-- [Standard Go Project Layout](https://github.com/golang-standards/project-layout)
-- [Organize Like a Pro: A Simple Guide to Go Project Folder Structures](https://medium.com/@smart_byte_labs/organize-like-a-pro-a-simple-guide-to-go-project-folder-structures-e85e9c1769c2)
+- **Separation of Concerns**: Each microservice manages its own domain logic and data lifecycle.
+- **Shared Contracts**: The `common` module ensures that both Producers and Consumers speak the same language (DTOs).
+- **Go Project Layout**: Each service follows the `cmd/`, `internal/`, `pkg/` pattern to ensure clean encapsulation and prevent leaking internal implementation details.
+- **Dependency Injection**: Services and repositories are decoupled via interfaces to facilitate testing and flexibility.

@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/MarkoLuna/EmployeeService/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeService/internal/models"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/go-playground/validator.v9"
 )

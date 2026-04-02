@@ -13,7 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
-	"github.com/MarkoLuna/EmployeeService/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeService/internal/models"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"

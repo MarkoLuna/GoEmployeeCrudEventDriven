@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/MarkoLuna/EmployeeService/internal/dto"
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 

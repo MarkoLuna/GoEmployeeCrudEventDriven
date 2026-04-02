@@ -8,11 +8,12 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/impl"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/go-oauth2/oauth2/v4/store"
 	"github.com/labstack/echo/v4"
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
 
 	_ "github.com/MarkoLuna/EmployeeService/docs"
 )
@@ -81,7 +82,7 @@ func ConfigureApp() {
 	if oauthProvider == "keycloak" {
 		authServerURL := utils.GetEnv("KEYCLOAK_AUTH_SERVER_URL", "http://localhost:8082")
 		realm := utils.GetEnv("KEYCLOAK_REALM", "dev")
-		App.OAuthService = impl.NewKeycloakOAuthService(authServerURL, realm)
+		App.OAuthService = auth.NewKeycloakOAuthService(authServerURL, realm)
 	} else {
 		App.OAuthService = impl.NewLocalOAuthService()
 	}

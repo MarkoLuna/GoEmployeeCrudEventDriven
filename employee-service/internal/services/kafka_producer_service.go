@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/MarkoLuna/EmployeeService/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 )
 
 type KafkaProducerService interface {

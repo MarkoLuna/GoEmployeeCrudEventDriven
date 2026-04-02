@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/MarkoLuna/EmployeeService/internal/models"
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 )
 
 var (

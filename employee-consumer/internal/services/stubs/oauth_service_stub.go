@@ -1,7 +1,7 @@
 package stubs
 
 import (
-	"github.com/MarkoLuna/EmployeeConsumer/internal/dto"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 )

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 

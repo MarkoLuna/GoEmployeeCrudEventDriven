@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 
 	"github.com/stretchr/testify/assert"

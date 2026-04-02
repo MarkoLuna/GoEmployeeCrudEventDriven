@@ -3,7 +3,7 @@ package repositories
 import (
 	"time"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/constants"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 )
 

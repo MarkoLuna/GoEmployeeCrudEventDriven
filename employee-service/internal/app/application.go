@@ -15,7 +15,7 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/routes"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 

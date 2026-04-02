@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/MarkoLuna/EmployeeService/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	_ "github.com/lib/pq"
 )
 

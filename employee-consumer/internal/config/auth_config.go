@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services"
-	"github.com/MarkoLuna/EmployeeConsumer/pkg/utils"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	echojwt "github.com/labstack/echo-jwt/v4"
 )
 
 var (
@@ -33,16 +33,12 @@ func NewAuthConfig(echoInstance *echo.Echo, enableAuth bool, skippedPaths []stri
 	if enableAuth {
 		authConfig := AuthConfig{EnableAuth: enableAuth, SkippedPaths: skippedPaths, OAuthService: authService}
 
-		defaultJWTConfig := middleware.JWTConfig{
+		defaultJWTConfig := echojwt.Config{
 			SigningKey: []byte(signingKey),
-			// Skipper:    middleware.DefaultSkipper,
-			// oauth skipper returns false which processes the middleware.
 			Skipper: func(e echo.Context) bool {
 				return authConfig.isSkippedPath(e.Request().URL.Path)
 			},
-			SigningMethod: middleware.AlgorithmHS256,
-			TokenLookup:   "header:" + echo.HeaderAuthorization,
-			ParseTokenFunc: func(auth string, c echo.Context) (interface{}, error) {
+			ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
 
 				accessToken, ok := utils.GetBearerAuth(c.Request().Header)
 				if !ok {
@@ -58,11 +54,9 @@ func NewAuthConfig(echoInstance *echo.Echo, enableAuth bool, skippedPaths []stri
 				}
 				return token, nil
 			},
-			// AuthScheme:    "Bearer",
-			// Claims:        jwt.MapClaims{},
 		}
 
-		echoInstance.Use(middleware.JWTWithConfig(defaultJWTConfig))
+		echoInstance.Use(echojwt.WithConfig(defaultJWTConfig))
 	}
 }
 
