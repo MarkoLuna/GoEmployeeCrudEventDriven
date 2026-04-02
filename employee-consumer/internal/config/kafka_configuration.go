@@ -18,3 +18,10 @@ func NewKafkaConsumer() (*kafka.Consumer, error) {
 	})
 	return c, err
 }
+
+func NewKafkaProducer() (*kafka.Producer, error) {
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": bootstrapServers,
+	})
+	return p, err
+}

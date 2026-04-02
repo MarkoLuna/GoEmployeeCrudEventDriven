@@ -64,7 +64,12 @@ func ConfigureApp() {
 		log.Fatal("Unable to initialize kafka consumer due to Error", err)
 	}
 
-	App.EmployeeKafkaConsumerService = impl.NewKafkaConsumerService(kafkaConsumer, App.EmployeeService)
+	kafkaProducer, err := config.NewKafkaProducer()
+	if err != nil {
+		log.Fatal("Unable to initialize kafka producer due to Error", err)
+	}
+
+	App.EmployeeKafkaConsumerService = impl.NewKafkaConsumerService(kafkaConsumer, kafkaProducer, App.EmployeeService)
 
 	App.ClientService = services.NewClientService()
 	App.UserService = services.NewUserService()

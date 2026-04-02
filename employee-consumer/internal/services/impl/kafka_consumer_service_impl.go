@@ -13,26 +13,34 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-// TODO add policy retry
-
 var (
 	employeeInsertTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_INSERT_TOPIC", "employee-insert.v1")
 	employeeUpdateTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPDATE_TOPIC", "employee-update.v1")
 	employeeDeleteTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_DELETE_TOPIC", "employee-deletion.v1")
+
+	employeeInsertDLTTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_INSERT_DLT", "employee-insert.v1.dlt")
+	employeeUpdateDLTTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_UPDATE_DLT", "employee-update.v1.dlt")
+	employeeDeleteDLTTopic = utils.GetEnv("KAFKA_CONSUMER_EMPLOYEE_DELETE_DLT", "employee-deletion.v1.dlt")
 )
 
-// KafkaConsumer defines the subset of kafka.Consumer methods used by this service.
 type KafkaConsumer interface {
 	SubscribeTopics(topics []string, rebalanceCb kafka.RebalanceCb) error
 	ReadMessage(timeout time.Duration) (*kafka.Message, error)
 	Close() error
 }
 
+// KafkaProducer defines the subset of kafka.Producer methods used by this service.
+type KafkaProducer interface {
+	Produce(msg *kafka.Message, deliveryChan chan kafka.Event) error
+	Close()
+}
+
 // KafkaConsumerServiceImpl fans each Kafka topic out to its own dedicated
 // worker pool so insert, update and delete workloads scale independently.
 type KafkaConsumerServiceImpl struct {
 	consumer            KafkaConsumer
-	employeeService      services.EmployeeService
+	producer            KafkaProducer
+	employeeService     services.EmployeeService
 	insertWorkerCount   int
 	updateWorkerCount   int
 	deleteWorkerCount   int
@@ -43,10 +51,12 @@ type KafkaConsumerServiceImpl struct {
 
 func NewKafkaConsumerService(
 	kafkaConsumer KafkaConsumer,
+	kafkaProducer KafkaProducer,
 	employeeService services.EmployeeService,
 ) services.KafkaConsumerService {
 	return &KafkaConsumerServiceImpl{
 		consumer:            kafkaConsumer,
+		producer:            kafkaProducer,
 		employeeService:     employeeService,
 		insertWorkerCount:   utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_INSERT", 3),
 		updateWorkerCount:   utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_UPDATE", 3),
@@ -92,6 +102,36 @@ func (kSrv *KafkaConsumerServiceImpl) withRetry(fn func() error) error {
 		}
 	}
 	return nil
+}
+
+func (kSrv *KafkaConsumerServiceImpl) produceToDLT(dltTopic string, originalMsg *kafka.Message, finalErr error) {
+	if kSrv.producer == nil {
+		log.Printf("DLT producer is not configured, cannot send to %s", dltTopic)
+		return
+	}
+
+	originalTopic := ""
+	if originalMsg.TopicPartition.Topic != nil {
+		originalTopic = *originalMsg.TopicPartition.Topic
+	}
+
+	dltMsg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &dltTopic, Partition: kafka.PartitionAny},
+		Value:          originalMsg.Value,
+		Key:            originalMsg.Key,
+		Headers: append(originalMsg.Headers,
+			kafka.Header{Key: "x-retries", Value: []byte(fmt.Sprintf("%d", kSrv.retryMaxAttempts))},
+			kafka.Header{Key: "x-error-message", Value: []byte(finalErr.Error())},
+			kafka.Header{Key: "x-original-topic", Value: []byte(originalTopic)},
+		),
+	}
+
+	err := kSrv.producer.Produce(dltMsg, nil)
+	if err != nil {
+		log.Printf("Failed to produce to DLT %s: %v", dltTopic, err)
+		return
+	}
+	log.Printf("Successfully sent message to DLT %s after %d retries", dltTopic, kSrv.retryMaxAttempts)
 }
 
 // startWorkerPool launches n goroutines that each drain ch by calling handler.
@@ -202,6 +242,7 @@ func (kSrv *KafkaConsumerServiceImpl) handleInsert(msg *kafka.Message) {
 
 	if err != nil {
 		log.Printf("Final failure creating employee after retries: %v", err)
+		kSrv.produceToDLT(employeeInsertDLTTopic, msg, err)
 		kSrv.processedKeys.Delete(key) // Unblock after final transient failure
 	}
 }
@@ -233,6 +274,7 @@ func (kSrv *KafkaConsumerServiceImpl) handleUpdate(msg *kafka.Message) {
 
 	if err != nil {
 		log.Printf("Final failure updating employee after retries: %v", err)
+		kSrv.produceToDLT(employeeUpdateDLTTopic, msg, err)
 		kSrv.processedKeys.Delete(key) // Unblock after final transient failure
 	}
 }
@@ -258,6 +300,7 @@ func (kSrv *KafkaConsumerServiceImpl) handleDelete(msg *kafka.Message) {
 
 	if err != nil {
 		log.Printf("Final failure deleting employee after retries: %v", err)
+		kSrv.produceToDLT(employeeDeleteDLTTopic, msg, err)
 		kSrv.processedKeys.Delete(key) // Unblock after final transient failure
 	}
 }

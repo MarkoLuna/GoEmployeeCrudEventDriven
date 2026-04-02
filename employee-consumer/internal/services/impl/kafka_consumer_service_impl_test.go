@@ -42,6 +42,20 @@ func (m *MockKafkaConsumer) Close() error {
 	return args.Error(0)
 }
 
+// MockKafkaProducer is a mock implementation of kafka.Producer
+type MockKafkaProducer struct {
+	mock.Mock
+}
+
+func (m *MockKafkaProducer) Produce(msg *kafka.Message, deliveryChan chan kafka.Event) error {
+	args := m.Called(msg, deliveryChan)
+	return args.Error(0)
+}
+
+func (m *MockKafkaProducer) Close() {
+	m.Called()
+}
+
 // MockEmployeeService is a mock implementation of EmployeeService
 type MockEmployeeService struct {
 	mock.Mock
@@ -91,12 +105,14 @@ func createEmployeeMessageBytes(t *testing.T, id string, employeeInfo dto.Employ
 func TestKafkaConsumerService_Listen_NoErrorsWhenConsumerIsDisabled(t *testing.T) {
 	mockConsumer := new(MockKafkaConsumer)
 	mockEmployeeService := new(MockEmployeeService)
+	mockProducer := new(MockKafkaProducer)
 
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "false")
 	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
 
 	kafkaConsumerService := NewKafkaConsumerService(
 		mockConsumer,
+		mockProducer,
 		mockEmployeeService,
 	)
 
@@ -109,9 +125,10 @@ func TestKafkaConsumerService_Listen_NoErrorsWhenConsumerIsDisabled(t *testing.T
 func TestKafkaConsumerService_Listen_SuccessfullyDispatchesMessages(t *testing.T) {
 	mockConsumer := new(MockKafkaConsumer)
 	mockEmployeeService := new(MockEmployeeService)
+	mockProducer := new(MockKafkaProducer)
 
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
-	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
+	defer os.Setenv("KAFKA_CONSUMER_ENABLED", "false")
 
 	employeeRequest := dto.EmployeeRequest{FirstName: "John"}
 	insertBytes := createEmployeeMessageBytes(t, "", employeeRequest)
@@ -154,6 +171,7 @@ func TestKafkaConsumerService_Listen_SuccessfullyDispatchesMessages(t *testing.T
 
 	kafkaConsumerService := NewKafkaConsumerService(
 		mockConsumer,
+		mockProducer,
 		mockEmployeeService,
 	)
 
@@ -185,6 +203,7 @@ func TestKafkaConsumerService_Listen_ContinuesOnIndividualErrors(t *testing.T) {
 
 	kafkaConsumerService := NewKafkaConsumerService(
 		mockConsumer,
+		new(MockKafkaProducer),
 		mockEmployeeService,
 	)
 
@@ -265,6 +284,7 @@ func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
 
 	kafkaConsumerService := NewKafkaConsumerService(
 		mockConsumer,
+		new(MockKafkaProducer),
 		mockEmployeeService,
 	)
 
@@ -303,7 +323,7 @@ func TestKafkaConsumerService_Listen_RetriesOnTransientError(t *testing.T) {
 	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(nil, errors.New("transient error")).Twice()
 	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(&models.Employee{Id: "retry-id"}, nil).Once()
 
-	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, mockEmployeeService)
+	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, new(MockKafkaProducer), mockEmployeeService)
 	err := kafkaConsumerService.Listen()
 
 	assert.Error(t, err)
@@ -333,13 +353,54 @@ func TestKafkaConsumerService_Listen_SkipsDuplicateMessages(t *testing.T) {
 	// Should only be called ONCE
 	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(&models.Employee{Id: "id"}, nil).Once()
 
-	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, mockEmployeeService)
+	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, new(MockKafkaProducer), mockEmployeeService)
 	err := kafkaConsumerService.Listen()
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "stop loop")
 	mockEmployeeService.AssertExpectations(t)
 }
+
+func TestKafkaConsumerService_Listen_SendsToDLTAfterFinalFailure(t *testing.T) {
+	mockConsumer := new(MockKafkaConsumer)
+	mockEmployeeService := new(MockEmployeeService)
+	mockProducer := new(MockKafkaProducer)
+
+	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
+	os.Setenv("KAFKA_CONSUMER_MAX_RETRIES", "2") // 2 attempts total
+	os.Setenv("KAFKA_CONSUMER_RETRY_INITIAL_BACKOFF_MS", "1")
+	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
+	defer os.Unsetenv("KAFKA_CONSUMER_MAX_RETRIES")
+	defer os.Unsetenv("KAFKA_CONSUMER_RETRY_INITIAL_BACKOFF_MS")
+
+	employeeRequest := dto.EmployeeRequest{FirstName: "DLT"}
+	topicInsert := "employee-insert.v1"
+	msg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topicInsert, Partition: 0, Offset: 200},
+		Value:          createEmployeeMessageBytes(t, "", employeeRequest),
+	}
+
+	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
+	mockConsumer.On("ReadMessage", mock.Anything).Return(msg, nil).Once()
+	mockConsumer.On("ReadMessage", mock.Anything).Return(nil, errors.New("stop loop")).Once()
+
+	// Always fail
+	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(nil, errors.New("permanent transient failure")).Times(2)
+
+	// Verify DLT production
+	mockProducer.On("Produce", mock.MatchedBy(func(m *kafka.Message) bool {
+		return *m.TopicPartition.Topic == "employee-insert.v1.dlt" &&
+			string(m.Value) == string(msg.Value)
+	}), mock.Anything).Return(nil).Once()
+
+	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, mockProducer, mockEmployeeService)
+	err := kafkaConsumerService.Listen()
+
+	assert.Error(t, err)
+	mockEmployeeService.AssertExpectations(t)
+	mockProducer.AssertExpectations(t)
+}
+
 
 
 
