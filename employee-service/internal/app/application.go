@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MarkoLuna/EmployeeService/internal/config"
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
+	"github.com/MarkoLuna/EmployeeService/internal/config"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
 	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/routes"
@@ -19,7 +19,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
-
 )
 
 type Application struct {
@@ -38,12 +37,12 @@ type Application struct {
 
 func (app *Application) LoadConfiguration() {
 	config.EnableCORS(app.EchoInstance)
+	config.ConfigureLogging()
 
 	server_auth_enabled := utils.GetEnv("OAUTH_ENABLED", "false")
 	auth_enabled, _ := strconv.ParseBool(server_auth_enabled)
 	config.NewAuthConfig(app.EchoInstance, auth_enabled, config.DefaultSkippedPaths[:], app.OAuthService)
 }
-
 
 func (app *Application) Address() string {
 	port := utils.GetEnv("SERVER_PORT", "8080")

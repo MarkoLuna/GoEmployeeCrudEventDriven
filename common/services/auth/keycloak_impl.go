@@ -37,7 +37,9 @@ func (k *KeycloakOAuthServiceImpl) HandleTokenGeneration(clientId string, client
 }
 
 func (k *KeycloakOAuthServiceImpl) ParseToken(accessToken string) (*jwt.Token, error) {
-	return jwt.Parse(accessToken, k.getKey)
+	return jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+		return k.getKey(token, accessToken)
+	})
 }
 
 func (k *KeycloakOAuthServiceImpl) GetTokenClaims(accessToken string) (map[string]string, error) {
@@ -79,7 +81,7 @@ func (k *KeycloakOAuthServiceImpl) IsValidToken(accessToken string) (bool, error
 	return token.Valid, nil
 }
 
-func (k *KeycloakOAuthServiceImpl) getKey(token *jwt.Token) (interface{}, error) {
+func (k *KeycloakOAuthServiceImpl) getKey(token *jwt.Token, accessToken string) (interface{}, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 	}
@@ -98,7 +100,7 @@ func (k *KeycloakOAuthServiceImpl) getKey(token *jwt.Token) (interface{}, error)
 	}
 
 	// Fetch JWKS if key not found
-	if err := k.refreshKeys(); err != nil {
+	if err := k.refreshKeys(accessToken); err != nil {
 		return nil, err
 	}
 
@@ -113,12 +115,24 @@ func (k *KeycloakOAuthServiceImpl) getKey(token *jwt.Token) (interface{}, error)
 	return key, nil
 }
 
-func (k *KeycloakOAuthServiceImpl) refreshKeys() error {
+func (k *KeycloakOAuthServiceImpl) refreshKeys(requestToken string) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
 	log.Printf("Refreshing JWKS from %s", k.jwksURL)
-	resp, err := http.Get(k.jwksURL)
+
+	req, err := http.NewRequest("GET", k.jwksURL, nil)
+	if err != nil {
+		return err
+	}
+
+	if requestToken != "" {
+		req.Header.Set("Authorization", "Bearer "+requestToken)
+	} else {
+		log.Printf("Warning: No token available for JWKS refresh: %v. Attempting unauthenticated request.", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
