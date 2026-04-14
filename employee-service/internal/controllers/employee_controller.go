@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeService/internal/models"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/go-playground/validator.v9"
@@ -20,6 +20,14 @@ type EmployeeController struct {
 
 func NewEmployeeController(employeeService services.EmployeeService) EmployeeController {
 	return EmployeeController{employeeService}
+}
+
+func (eCtrl EmployeeController) getJwtToken(c echo.Context) string {
+	authHeader := c.Request().Header.Get("Authorization")
+	if len(authHeader) >= 7 && authHeader[0:7] == "Bearer " {
+		return authHeader[7:]
+	}
+	return authHeader
 }
 
 // CreateEmployee EmployeeApi
@@ -49,7 +57,8 @@ func (eCtrl EmployeeController) CreateEmployee(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "")
 	}
 
-	e, err := eCtrl.employeeService.CreateEmployee(employee)
+	jwt := eCtrl.getJwtToken(c)
+	e, err := eCtrl.employeeService.CreateEmployee(jwt, employee)
 	if err != nil {
 		log.Println(err)
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -69,7 +78,8 @@ func (eCtrl EmployeeController) CreateEmployee(c echo.Context) error {
 // @Security ApiKeyAuth
 // @Router /api/employee/ [get]
 func (eCtrl EmployeeController) GetEmployees(c echo.Context) error {
-	newEmployees, err := eCtrl.employeeService.GetEmployees()
+	jwt := eCtrl.getJwtToken(c)
+	newEmployees, err := eCtrl.employeeService.GetEmployees(jwt)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -89,8 +99,9 @@ func (eCtrl EmployeeController) GetEmployees(c echo.Context) error {
 // @Security ApiKeyAuth
 // @Router /api/employee/{employeeId} [get]
 func (eCtrl EmployeeController) GetEmployeeById(c echo.Context) error {
+	jwt := eCtrl.getJwtToken(c)
 	employeeId := c.Param("employeeId")
-	EmployeeDetails, err := eCtrl.employeeService.GetEmployeeById(employeeId)
+	EmployeeDetails, err := eCtrl.employeeService.GetEmployeeById(jwt, employeeId)
 	if err == nil {
 		return c.JSON(http.StatusOK, EmployeeDetails)
 	} else {
@@ -128,8 +139,9 @@ func (eCtrl EmployeeController) UpdateEmployee(c echo.Context) error {
 		return c.String(http.StatusNotFound, err.Error())
 	}
 
+	jwt := eCtrl.getJwtToken(c)
 	employeeId := c.Param("employeeId")
-	employeeDetails, err := eCtrl.employeeService.UpdateEmployee(employeeId, updateEmployee)
+	employeeDetails, err := eCtrl.employeeService.UpdateEmployee(jwt, employeeId, updateEmployee)
 	if err == nil {
 		return c.JSON(http.StatusOK, employeeDetails)
 	} else {
@@ -149,9 +161,10 @@ func (eCtrl EmployeeController) UpdateEmployee(c echo.Context) error {
 // @Security ApiKeyAuth
 // @Router /api/employee/{employeeId} [delete]
 func (eCtrl EmployeeController) DeleteEmployee(c echo.Context) error {
+	jwt := eCtrl.getJwtToken(c)
 	employeeId := c.Param("employeeId")
 
-	err := eCtrl.employeeService.DeleteEmployeeById(employeeId)
+	err := eCtrl.employeeService.DeleteEmployeeById(jwt, employeeId)
 	if err == nil {
 		return c.String(http.StatusOK, "")
 	} else {

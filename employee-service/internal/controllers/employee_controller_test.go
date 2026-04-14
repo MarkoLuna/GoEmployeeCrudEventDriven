@@ -20,6 +20,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const validToken = "valid-token"
+
 var invalidEmployee = &models.Employee{
 	Id:               "1",
 	FirstName:        "",
@@ -47,14 +49,16 @@ func TestEmployeeController_GetEmployeesEmployees(t *testing.T) {
 	employees = append(employees, createEmployee2())
 
 	employeeClient := clients.NewEmployeeConsumerServiceStubFromData(employees, nil)
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
 
 	req, err := http.NewRequest(http.MethodGet, "/api/employee/", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -88,8 +92,9 @@ func TestEmployeeController_GetEmployeesEmployees(t *testing.T) {
 func TestEmployeeController_CreateEmployeeEmployee(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -97,6 +102,7 @@ func TestEmployeeController_CreateEmployeeEmployee(t *testing.T) {
 	jsonStr, _ := json.Marshal(validEmployee)
 	req, err := http.NewRequest(http.MethodPost, "/api/employee/", bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+validToken)
 
 	assert.NoError(t, err)
 
@@ -111,8 +117,9 @@ func TestEmployeeController_CreateEmployeeEmployee(t *testing.T) {
 func TestEmployeeController_CreateEmployeeEmployeeThenBadRequest(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -120,6 +127,7 @@ func TestEmployeeController_CreateEmployeeEmployeeThenBadRequest(t *testing.T) {
 	jsonStr, _ := json.Marshal(invalidEmployee)
 	req, err := http.NewRequest(http.MethodPost, "/api/employee/", bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+validToken)
 
 	assert.NoError(t, err)
 
@@ -137,14 +145,16 @@ func TestEmployeeController_GetEmployeeByIdEmployee(t *testing.T) {
 	employees = append(employees, *validEmployee)
 
 	employeeClient := clients.NewEmployeeConsumerServiceStubFromData(employees, nil)
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
 
 	req, err := http.NewRequest(http.MethodGet, "/api/employee/1", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -176,14 +186,16 @@ func TestEmployeeController_GetEmployeeByIdEmployeeThenNotFound(t *testing.T) {
 	employees = append(employees, *validEmployee)
 
 	employeeClient := clients.NewEmployeeConsumerServiceStubFromError(errors.New("employee not Found"))
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
 
 	req, err := http.NewRequest(http.MethodGet, "/api/employee/1", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -201,8 +213,9 @@ func TestEmployeeController_GetEmployeeByIdEmployeeThenNotFound(t *testing.T) {
 func TestEmployeeController_UpdateEmployee(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -210,6 +223,7 @@ func TestEmployeeController_UpdateEmployee(t *testing.T) {
 	jsonStr, _ := json.Marshal(validEmployee)
 	req, err := http.NewRequest(http.MethodPut, "/api/employee/1", bytes.NewBuffer(jsonStr))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -227,8 +241,9 @@ func TestEmployeeController_UpdateEmployee(t *testing.T) {
 func TestEmployeeController_UpdateEmployeeThenNotFound(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStubFromError(errors.New("employee not Found"))
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
@@ -236,6 +251,7 @@ func TestEmployeeController_UpdateEmployeeThenNotFound(t *testing.T) {
 	jsonStr, _ := json.Marshal(validEmployee)
 	req, err := http.NewRequest(http.MethodPut, "/api/employee/1", bytes.NewBuffer(jsonStr))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -253,13 +269,15 @@ func TestEmployeeController_UpdateEmployeeThenNotFound(t *testing.T) {
 func TestEmployeeController_DeleteEmployee(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
 
 	req, err := http.NewRequest(http.MethodDelete, "/api/employee/1", nil)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -278,13 +296,15 @@ func TestEmployeeController_DeleteEmployee(t *testing.T) {
 func TestDeleteByIdError(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	kafkaProducerService := stubs.NewKafkaProducerServiceStubFromError(errors.New("failed to delete"))
-	employeeService := services.NewEmployeeService(employeeClient, kafkaProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, kafkaProducerService)
 	employeeController := NewEmployeeController(employeeService)
 
 	e := echo.New()
 
 	req, err := http.NewRequest(http.MethodDelete, "/api/employee/1", nil)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -324,4 +344,60 @@ func createEmployee2() models.Employee {
 	employee2.Status = constants.ACTIVE
 
 	return employee2
+}
+
+func TestEmployeeController_getJwtToken(t *testing.T) {
+	e := echo.New()
+	ctrl := EmployeeController{}
+
+	tests := []struct {
+		name           string
+		authHeader     string
+		expectedResult string
+	}{
+		{
+			name:           "Valid Bearer Token",
+			authHeader:     "Bearer my-secret-token",
+			expectedResult: "my-secret-token",
+		},
+		{
+			name:           "No Authorization Header",
+			authHeader:     "",
+			expectedResult: "",
+		},
+		{
+			name:           "Token Without Prefix",
+			authHeader:     "token-without-prefix",
+			expectedResult: "token-without-prefix",
+		},
+		{
+			name:           "Bearer Prefix Only",
+			authHeader:     "Bearer ",
+			expectedResult: "",
+		},
+		{
+			name:           "Bearer Prefix Too Short",
+			authHeader:     "Bear my-token",
+			expectedResult: "Bear my-token",
+		},
+		{
+			name:           "Other Authorization Type",
+			authHeader:     "Basic dXNlcjpwYXNz",
+			expectedResult: "Basic dXNlcjpwYXNz",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tt.authHeader != "" {
+				req.Header.Set("Authorization", tt.authHeader)
+			}
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			result := ctrl.getJwtToken(c)
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
 }

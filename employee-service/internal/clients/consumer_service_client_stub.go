@@ -7,6 +7,7 @@ import (
 type EmployeeConsumerServiceClientStub struct {
 	employees []models.Employee
 	err       error
+	token     string
 }
 
 func NewEmployeeConsumerServiceStub() EmployeeConsumerServiceClient {

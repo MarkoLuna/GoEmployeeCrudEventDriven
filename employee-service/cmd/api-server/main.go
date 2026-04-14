@@ -60,9 +60,9 @@ func ConfigureApp() {
 		App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, true)
 	}
 
-	if App.EmployeeConsumerServiceClient == nil {
+	if App.EmployeeConsumerServiceClientBuilder == nil {
 		httpClient := config.NewHttpClient()
-		App.EmployeeConsumerServiceClient = clients.NewEmployeeConsumerServiceClient(*httpClient)
+		App.EmployeeConsumerServiceClientBuilder = clients.NewEmployeeConsumerServiceClientBuilder().WithHttpClient(*httpClient)
 	}
 
 	if App.KafkaProducerService == nil {
@@ -74,7 +74,7 @@ func ConfigureApp() {
 		App.KafkaProducerService = impl.NewKafkaProducerService(kafkaConsumer)
 	}
 
-	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClient, App.KafkaProducerService)
+	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClientBuilder, App.KafkaProducerService)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
 
 	App.ClientService = services.NewClientService()

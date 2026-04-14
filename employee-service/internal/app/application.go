@@ -29,10 +29,10 @@ type Application struct {
 	UserService                   services.UserService
 	OAuthService                  services.OAuthService
 	EmployeeRepository            repositories.EmployeeRepository
-	EmployeeController            controllers.EmployeeController
-	OAuthController               controllers.OAuthController
-	EmployeeConsumerServiceClient clients.EmployeeConsumerServiceClient
-	KafkaProducerService          services.KafkaProducerService
+	EmployeeController                   controllers.EmployeeController
+	OAuthController                      controllers.OAuthController
+	EmployeeConsumerServiceClientBuilder *clients.EmployeeConsumerServiceClientBuilder
+	KafkaProducerService                 services.KafkaProducerService
 }
 
 func (app *Application) LoadConfiguration() {

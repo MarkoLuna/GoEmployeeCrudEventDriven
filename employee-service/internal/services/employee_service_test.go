@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testJwt = "test-token"
+
 func TestEmployeeService_GetEmployeesEmployees(t *testing.T) {
 
 	employees := make([]models.Employee, 0)
@@ -20,10 +22,11 @@ func TestEmployeeService_GetEmployeesEmployees(t *testing.T) {
 	employees = append(employees, createEmployee2())
 
 	employeeClient := clients.NewEmployeeConsumerServiceStubFromData(employees, nil)
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := NewEmployeeService(employeeClient, employeeProducerService)
+	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
-	employeesSlice, err := employeeService.GetEmployees()
+	employeesSlice, err := employeeService.GetEmployees(testJwt)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(employeesSlice), "handler returned unexpected body: got empty")
@@ -44,8 +47,9 @@ func TestEmployeeService_GetEmployeesEmployees(t *testing.T) {
 func TestEmployeeService_CreateEmployeeEmployee(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := NewEmployeeService(employeeClient, employeeProducerService)
+	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
 	var employee dto.EmployeeRequest
 	employee.FirstName = "Marcos"
@@ -55,7 +59,7 @@ func TestEmployeeService_CreateEmployeeEmployee(t *testing.T) {
 	employee.DateOfEmployment = time.Now().UTC()
 	employee.Status = constants.ACTIVE
 
-	_, err := employeeService.CreateEmployee(employee)
+	_, err := employeeService.CreateEmployee(testJwt, employee)
 
 	assert.NoError(t, err)
 }
@@ -66,10 +70,11 @@ func TestEmployeeService_GetEmployeeByIdEmployee(t *testing.T) {
 	employees = append(employees, createEmployee1())
 
 	employeeClient := clients.NewEmployeeConsumerServiceStubFromData(employees, nil)
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := NewEmployeeService(employeeClient, employeeProducerService)
+	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
-	employeeResponse, err := employeeService.GetEmployeeById("1")
+	employeeResponse, err := employeeService.GetEmployeeById(testJwt, "1")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, employeeResponse)
@@ -81,8 +86,9 @@ func TestEmployeeService_GetEmployeeByIdEmployee(t *testing.T) {
 func TestEmployeeService_UpdateEmployee(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := NewEmployeeService(employeeClient, employeeProducerService)
+	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
 	var employee dto.EmployeeRequest
 	employee.FirstName = "Marcos"
@@ -92,7 +98,7 @@ func TestEmployeeService_UpdateEmployee(t *testing.T) {
 	employee.DateOfEmployment = time.Now().UTC()
 	employee.Status = constants.ACTIVE
 
-	employeeResponse, err := employeeService.UpdateEmployee("1", employee)
+	employeeResponse, err := employeeService.UpdateEmployee(testJwt, "1", employee)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, employeeResponse)
@@ -101,10 +107,11 @@ func TestEmployeeService_UpdateEmployee(t *testing.T) {
 func TestEmployeeService_DeleteEmployee(t *testing.T) {
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := NewEmployeeService(employeeClient, employeeProducerService)
+	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
-	err := employeeService.DeleteEmployeeById("1")
+	err := employeeService.DeleteEmployeeById(testJwt, "1")
 	assert.NoError(t, err)
 }
 

@@ -23,8 +23,9 @@ func TestRegisterEmployeeStoreRoutes(t *testing.T) {
 	echoInstance := echo.New()
 
 	employeeClient := clients.NewEmployeeConsumerServiceStub()
+	clientBuilder := clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(employeeClient)
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
-	employeeService := services.NewEmployeeService(employeeClient, employeeProducerService)
+	employeeService := services.NewEmployeeService(clientBuilder, employeeProducerService)
 	employeeController := controllers.NewEmployeeController(employeeService)
 
 	RegisterEmployeeStoreRoutes(echoInstance, &employeeController)
@@ -56,6 +57,7 @@ func TestRegisterEmployeeStoreRoutes(t *testing.T) {
 	for _, table := range tables {
 		req, err := http.NewRequest(table.method, table.path, table.body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set("Authorization", "Bearer test-token")
 		assert.NoError(t, err)
 
 		rr := httptest.NewRecorder()

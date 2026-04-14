@@ -35,9 +35,9 @@ func InitServer(db_connection *sql.DB) {
 	App.EchoInstance = echo.New()
 	App.DbConnection = db_connection
 	App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, false)
-	App.EmployeeConsumerServiceClient = clients.NewEmployeeConsumerServiceStub()
+	App.EmployeeConsumerServiceClientBuilder = clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(clients.NewEmployeeConsumerServiceStub())
 	App.KafkaProducerService = stubs.NewKafkaProducerServiceStub()
-	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClient, App.KafkaProducerService)
+	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClientBuilder, App.KafkaProducerService)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
 	App.OAuthService = stubs.NewOAuthServiceStub()
 
