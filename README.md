@@ -141,6 +141,33 @@ cd employee-consumer && make docker-compose-run
 
 ---
 
+## Development Tasks (Makefile)
+
+Each module (`employee-service` and `employee-consumer`) includes a `Makefile` to automate common development tasks.
+
+### Available Commands
+
+Run these commands from within the respective service directory.
+
+| Command | Description |
+|---|---|
+| `make help` | Show all available targets and their descriptions |
+| `make build` | Compile the service and generate a binary |
+| `make run` | Build and run the service locally |
+| `make test` | Run unit tests |
+| `make test-cover` | Run unit tests and show coverage percentage |
+| `make test-total-cover` | Generate a detailed coverage report |
+| `make clean` | Remove build artifacts and binaries |
+| `make docker-build` | Build the Docker image for the service |
+| `make k8-apply` | Build and deploy the service to Kubernetes |
+
+For a complete and up-to-date list, run:
+```bash
+make help
+```
+
+---
+
 ## Running Tests
 
 ```bash
