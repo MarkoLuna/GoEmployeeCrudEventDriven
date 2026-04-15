@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "GoEmployeeCrudEventDriven",
+    "description": "Employee CRUD REST API with Event-Driven Architecture using Go and Apache Kafka"
+  },
+  "ignore": [
+    "**/*.sum",
+    "**/vendor/**",
+    "**/.env",
+    "**/ssl/*.pem",
+    "**/docs/swagger.json",
+    "**/docs/swagger.yaml",
+    "**/docs/docs.go"
+  ]
+}
