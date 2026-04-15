@@ -32,19 +32,14 @@ definitions:
   dto.JWTResponse:
     properties:
       access_token:
-        example: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjbGllbnQiLCJleHAiOjE2NjIxNTY3MDUsInN1YiI6IjAwMDAwMCJ9.xqHSNgbzZWFCmkMw48syhVJvQkyvnnM7__Rk915EMv2Di2kdIFiZJwWIt9RciD2jKgyBB-Usei3wEwzxuHhLgQ
         type: string
       expires_in:
-        example: 120
         type: integer
       refresh_token:
-        example: NMU1NDCWODYTNGZIMY01YMVLLTLLMGETMJU2ZDNLNTJIMGI5
         type: string
       scope:
-        example: all
         type: string
       token_type:
-        example: Bearer
         type: string
     type: object
   models.Employee:

@@ -379,24 +379,19 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "access_token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjbGllbnQiLCJleHAiOjE2NjIxNTY3MDUsInN1YiI6IjAwMDAwMCJ9.xqHSNgbzZWFCmkMw48syhVJvQkyvnnM7__Rk915EMv2Di2kdIFiZJwWIt9RciD2jKgyBB-Usei3wEwzxuHhLgQ"
+                    "type": "string"
                 },
                 "expires_in": {
-                    "type": "integer",
-                    "example": 120
+                    "type": "integer"
                 },
                 "refresh_token": {
-                    "type": "string",
-                    "example": "NMU1NDCWODYTNGZIMY01YMVLLTLLMGETMJU2ZDNLNTJIMGI5"
+                    "type": "string"
                 },
                 "scope": {
-                    "type": "string",
-                    "example": "all"
+                    "type": "string"
                 },
                 "token_type": {
-                    "type": "string",
-                    "example": "Bearer"
+                    "type": "string"
                 }
             }
         },
