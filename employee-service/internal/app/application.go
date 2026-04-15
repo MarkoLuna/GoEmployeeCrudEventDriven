@@ -1,7 +1,6 @@
 package app
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -11,7 +10,6 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
 	"github.com/MarkoLuna/EmployeeService/internal/config"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
-	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/routes"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
@@ -23,12 +21,10 @@ import (
 
 type Application struct {
 	EchoInstance                  *echo.Echo
-	DbConnection                  *sql.DB
+	OAuthService                  services.OAuthService
 	EmployeeService               services.EmployeeService
 	ClientService                 services.ClientService
 	UserService                   services.UserService
-	OAuthService                  services.OAuthService
-	EmployeeRepository            repositories.EmployeeRepository
 	EmployeeController                   controllers.EmployeeController
 	OAuthController                      controllers.OAuthController
 	EmployeeConsumerServiceClientBuilder *clients.EmployeeConsumerServiceClientBuilder

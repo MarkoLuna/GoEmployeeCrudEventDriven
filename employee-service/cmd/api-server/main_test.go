@@ -1,33 +1,25 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeService/internal/models"
-	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	basePath = "http://localhost:8080"
-	sqlMock  sqlmock.Sqlmock
 )
 
-func InitServer(dbConnection *sql.DB) {
-	App.DbConnection = dbConnection
-	App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, false)
+func InitServer() {
 	App.OAuthService = stubs.NewOAuthServiceStub()
 	go main()
 }
@@ -42,19 +34,8 @@ var e = &models.Employee{
 	Status:           constants.ACTIVE,
 }
 
-func NewMock() (*sql.DB, sqlmock.Sqlmock) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		log.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-
-	return db, mock
-}
-
 func TestMain(m *testing.M) {
-	db, mock := NewMock()
-	sqlMock = mock
-	InitServer(db)
+	InitServer()
 
 	go func() {
 		code := m.Run()
@@ -62,75 +43,11 @@ func TestMain(m *testing.M) {
 	}()
 }
 
-func TestFindById(t *testing.T) {
-
-	query := `select
-				id_employee,
-				first_name,
-				last_name,
-				second_last_name,
-				date_of_birth,
-				date_of_employment,
-				status
-			from
-				employees
-			where
-				id_employee \\?`
-
-	rows := sqlmock.NewRows([]string{"id_employee", "first_name", "last_name", "second_last_name",
-		"date_of_birth", "date_of_employment", "status"}).
-		AddRow(e.Id, e.FirstName, e.LastName, e.SecondLastName, e.DateOfBirth, e.DateOfEmployment, e.Status)
-
-	sqlMock.ExpectQuery(query).WithArgs(e.Id).WillReturnRows(rows)
-
-	url := fmt.Sprintf("%s/api/employee/%s", basePath, e.Id)
-	resp := makeRequest("GET", url, nil)
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
-
-	employeeResponse := models.Employee{}
-	body, _ := io.ReadAll(resp.Body)
-	err := json.Unmarshal(body, &employeeResponse)
-
-	assert.NotNil(t, employeeResponse)
-	assert.NoError(t, err)
-}
-
-func TestFindAll(t *testing.T) {
-
-	query := `SELECT id_employee,
-				first_name,
-				last_name,
-				second_last_name,
-				date_of_birth,
-				date_of_employment,
-				status 
-			  FROM employees`
-
-	rows := sqlmock.NewRows([]string{"id_employee", "first_name", "last_name", "second_last_name",
-		"date_of_birth", "date_of_employment", "status"}).
-		AddRow(e.Id, e.FirstName, e.LastName, e.SecondLastName, e.DateOfBirth, e.DateOfEmployment, e.Status)
-
-	sqlMock.ExpectQuery(query).WillReturnRows(rows)
-
-	url := fmt.Sprintf("%s/api/employee/", basePath)
-	resp := makeRequest("GET", url, nil)
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
-
-	employeesSlice := make([]models.Employee, 0)
-	body, _ := io.ReadAll(resp.Body)
-	err := json.Unmarshal(body, &employeesSlice)
-
-	assert.NotEmpty(t, employeesSlice)
-	assert.NoError(t, err)
-	assert.Len(t, employeesSlice, 1)
-}
-
 func makeRequest(httpMethod string, url string, body io.Reader) *http.Response {
 	req, err := http.NewRequest(httpMethod, url, body)
+	if err != nil {
+		panic(err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -139,4 +56,12 @@ func makeRequest(httpMethod string, url string, body io.Reader) *http.Response {
 		panic(err)
 	}
 	return resp
+}
+
+func TestHealthcheck(t *testing.T) {
+	url := fmt.Sprintf("%s/healthcheck/", basePath)
+	resp := makeRequest("GET", url, nil)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "Invalid http status code")
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
 	"github.com/MarkoLuna/EmployeeService/internal/config"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
-	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/impl"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
@@ -46,20 +45,11 @@ var (
 // @name Authorization
 func main() {
 	ConfigureApp()
-	defer App.DbConnection.Close()
 	App.Run()
 }
 
 func ConfigureApp() {
 	App.EchoInstance = echo.New()
-	if App.DbConnection == nil {
-		App.DbConnection = config.GetDB()
-	}
-
-	if App.EmployeeRepository == nil {
-		App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, true)
-	}
-
 	if App.EmployeeConsumerServiceClientBuilder == nil {
 		httpClient := config.NewHttpClient()
 		App.EmployeeConsumerServiceClientBuilder = clients.NewEmployeeConsumerServiceClientBuilder().WithHttpClient(*httpClient)

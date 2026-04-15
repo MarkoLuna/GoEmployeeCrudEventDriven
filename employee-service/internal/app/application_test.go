@@ -13,7 +13,6 @@ import (
 
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
-	"github.com/MarkoLuna/EmployeeService/internal/repositories"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"
 	"github.com/labstack/echo/v4"
@@ -33,8 +32,6 @@ var (
 
 func InitServer(db_connection *sql.DB) {
 	App.EchoInstance = echo.New()
-	App.DbConnection = db_connection
-	App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, false)
 	App.EmployeeConsumerServiceClientBuilder = clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(clients.NewEmployeeConsumerServiceStub())
 	App.KafkaProducerService = stubs.NewKafkaProducerServiceStub()
 	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClientBuilder, App.KafkaProducerService)
