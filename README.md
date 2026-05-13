@@ -13,9 +13,7 @@ The project is split into two services that communicate over **Apache Kafka**:
 ## Table of Contents
 
 - [System Architecture](#system-architecture)
-  - [Component Diagram (Mermaid)](#component-diagram-mermaid)
 - [Deployment Architecture](#deployment-architecture)
-  - [Infrastructure Diagram (Mermaid)](#infrastructure-diagram-mermaid)
 - [Process Flows (Sequence Diagrams)](#process-flows-sequence-diagrams)
   - [1. Create Employee (Asynchronous)](#1-create-employee-asynchronous)
   - [2. Get Employee(s) (Distributed Read)](#2-get-employees-distributed-read)
@@ -46,10 +44,6 @@ The project is split into two services that communicate over **Apache Kafka**:
 ---
 
 ## System Architecture
-
-![System Architecture](./docs/images/architecture.png)
-
-### Component Diagram (Mermaid)
 
 > [View on Mermaid Live Editor](https://mermaid.live/edit#pako:eJx9kl9rwjAUxb9KydMGE2GPexjoLIy5MWcLPrQ-xOSqwTYp-SMr1u--26a1OqF5Sk5-9-TmJCfCFAfyEpCdpsU-iGepDHAYt_HCWyZAWuPVenghWcGmnQajYKqdVGvPgOSp_GcycXaPpGDUCiV7r1pP5lCyTNHDQP2XYFoZ0EfB4KqVyCtJmBeZKgE6YX3VrZLG5aB7plMGjktJeKwvNnUmJb3XnG4PNJkUlO3BLwY8Iqs03UFfPZsmDwtl7E5D9PP5eF_apTl6rd7jeDFehlFcdVfySLtomI9VPP6uA3yumhxbk_Z2A8i1SX1QsATKRwutfsvqUn-PIsAdzptoTOUD8FgzbaC2_ALd2t00hyFUGAp5CghKORUcf-GJ4EfJm__IqT6QM-66glMLIReYKG5saWYAZeqsikrJULLawQWcCYovkHfk-Q8YB-8E)
 
@@ -89,10 +83,6 @@ graph TD
 ---
 
 ## Deployment Architecture
-
-![Deployment Architecture](./docs/images/deployment.png)
-
-### Infrastructure Diagram (Mermaid)
 
 > [View on Mermaid Live Editor](https://mermaid.live/edit#pako:eJx9kstOwzAQRX_F8gokKvYskGhTQSgqQYlUpISFE0_bKIkd-YGomv47Q9207gsvIs-d4_H4Zta0kBzoA6ELxdolSYJMEFza5k7I6PjHgBKszqhL_a1RXYIw6Qzy3Zbck6GyQn45BgTPxFmlic2xEhjQeMpqLOvXDMVCgdbp9DmcfvbR1yEfg_ouC4gkT8dNW8sVQK8RFD1yJIW2DagjtBc99nKXoZgrpo2yhbEKyBT90X6fEzavWPrUsmIJLsCnywqU10EwTG8iqQ2-If54IwEzLGcabj1kAquilqxK-w15D4PReWc7fweDx-4lSaK4661x6V2wz3eeT9cIzx-HuO_h4JZ9nSXdvsuLRKQktwV0zoWLyL8XevK1G0-RXXx05SmDjnf4B-gdoag2rOQ432tqltBsJ50zVdENZm3LmYExL41UmJizWgPKzBoZr0SBEk4B7MGgZDgjTU9ufgHXWAxi)
 
@@ -418,8 +408,6 @@ To regenerate Swagger docs after changing annotations:
 swag init --dir cmd/api-server,internal
 ```
 Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is corrent. 
-
----
 
 ---
 
