@@ -7,9 +7,9 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
 	"github.com/MarkoLuna/EmployeeService/internal/config"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
+	"github.com/MarkoLuna/EmployeeService/internal/factories"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/impl"
-	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/server"
@@ -72,15 +72,9 @@ func ConfigureApp() {
 
 	oauthProvider := utils.GetEnv("OAUTH_PROVIDER", "local")
 	log.Println("OAuth Provider: ", oauthProvider)
-	if oauthProvider == "keycloak" {
-		log.Println("Using Keycloak for OAuth")
-		authServerURL := utils.GetEnv("KEYCLOAK_AUTH_SERVER_URL", "http://localhost:8082")
-		realm := utils.GetEnv("KEYCLOAK_REALM", "dev")
-		App.OAuthService = auth.NewKeycloakOAuthService(authServerURL, realm)
-	} else {
-		log.Println("Using Local OAuth")
-		App.OAuthService = impl.NewLocalOAuthService()
-	}
+
+	authProviderFactory := factories.GetOAuthProviderFactory(oauthProvider)
+	App.OAuthService = authProviderFactory()
 
 	manager := manage.NewDefaultManager()
 	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/config"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/controllers"
@@ -15,9 +14,6 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-
-	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Application struct {
@@ -50,15 +46,7 @@ func (app *Application) Address() string {
 }
 
 func (app *Application) HandleRoutes() {
-	app.EchoInstance.GET("/swagger/*", echoSwagger.WrapHandler)
-	app.EchoInstance.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
-			if strings.Contains(c.Request().URL.Path, "swagger") {
-				return true
-			}
-			return false
-		},
-	}))
+	routes.RegisterSwaggerRoute(app.EchoInstance)
 	routes.RegisterHealthcheckRoute(app.EchoInstance)
 	routes.RegisterEmployeeStoreRoutes(app.EchoInstance, &app.EmployeeController)
 	routes.RegisterOAuthRoutes(app.EchoInstance, &app.OAuthController)
