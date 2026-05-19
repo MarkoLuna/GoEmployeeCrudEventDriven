@@ -409,6 +409,86 @@ swag init --dir cmd/api-server,internal
 ```
 Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is corrent. 
 
+## Running with Kubernetes
+
+The project includes modular Kubernetes manifests under the `k8s/` folder. This allows you to run the entire microservices stack along with all required infrastructure dependencies (PostgreSQL, Kafka, ZooKeeper, and Keycloak) directly inside a local cluster (such as Minikube or KIND).
+
+### 1. Booting the Developer Infrastructure (Dependencies)
+
+Before starting the applications, spin up the local development database, event broker, and OIDC provider.
+
+Apply the infrastructure manifests in sequence (or as a single command):
+
+```bash
+# 1. ConfigMap for Keycloak realm and user imports
+kubectl apply -f k8s/keycloak-import-configmap.yaml
+
+# 2. Database service & deployment
+kubectl apply -f k8s/postgres-svc.yaml -f k8s/postgres-deployment.yaml
+
+# 3. Zookeeper and Kafka service & deployment
+kubectl apply -f k8s/zookeeper-svc.yaml -f k8s/zookeeper-deployment.yaml
+kubectl apply -f k8s/kafka-svc.yaml -f k8s/kafka-deployment.yaml
+
+# 4. Keycloak service & deployment
+kubectl apply -f k8s/keycloak-svc.yaml -f k8s/keycloak-deployment.yaml
+```
+
+To verify that the infrastructure is up and running:
+```bash
+kubectl get pods
+```
+
+---
+
+### 2. Deploying the Microservices Stack
+
+Once the infrastructure dependencies are ready, build and apply the shared configurations and Go services:
+
+#### Step A: Build the Docker Images
+Ensure your local Kubernetes cluster can access the images (if using Minikube, run `eval $(minikube docker-env)` first in your terminal before building):
+
+```bash
+# Build employee-service
+cd employee-service && make docker-build && cd ..
+
+# Build employee-consumer
+cd employee-consumer && make docker-build && cd ..
+```
+
+#### Step B: Apply Configurations, Services, and Ingress
+You can deploy both services using their Makefiles, which will automatically apply the shared ConfigMap, Secrets, Deployments, and Ingress:
+
+```bash
+# Deploy employee-service
+cd employee-service && make k8-apply && cd ..
+
+# Deploy employee-consumer
+cd employee-consumer && make k8-apply && cd ..
+```
+
+Alternatively, you can apply them manually using `kubectl`:
+```bash
+# Apply shared ConfigMap and Secrets
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secrets.yaml
+
+# Apply employee-service (API / Producer)
+kubectl apply -f k8s/employee-service-svc.yaml -f k8s/employee-service-deployment.yaml
+
+# Apply employee-consumer (Worker / Read Replica)
+kubectl apply -f k8s/employee-consumer-svc.yaml -f k8s/employee-consumer-deployment.yaml
+
+# Apply Routing Ingress
+kubectl apply -f k8s/ingress.yaml
+```
+
+#### Clean up everything:
+To completely teardown all applications and infrastructure from your Kubernetes cluster, run:
+```bash
+kubectl delete -f k8s/
+```
+
 ---
 
 ## Testing via Kubernetes Ingress

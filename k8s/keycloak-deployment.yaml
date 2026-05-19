@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-dev
+  namespace: default
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: docker.io/keycloak/keycloak:26.4
+          command: ["/opt/keycloak/bin/kc.sh"]
+          args: ["start-dev", "--import-realm", "--verbose"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KEYCLOAK_CREATE_ADMIN_USER
+              value: "true"
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: "dev"
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              value: "dev"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: import-volume
+              mountPath: /opt/keycloak/data/import
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: "250m"
+              memory: 512Mi
+      volumes:
+        - name: import-volume
+          configMap:
+            name: keycloak-import-config

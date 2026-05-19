@@ -66,12 +66,16 @@ docker-compose-down:
 
 ## k8-apply: Build and apply to Kubernetes
 k8-apply: docker-build
-	kubectl apply -f ../../k8s/employee-consumer-pod.yaml
-	kubectl apply -f ../../k8s/employee-consumer-svc.yaml
-	kubectl apply -f ../../k8s/ingress.yaml
+	kubectl apply -f ../k8s/configmap.yaml
+	kubectl apply -f ../k8s/secrets.yaml
+	kubectl apply -f ../k8s/employee-consumer-deployment.yaml
+	kubectl apply -f ../k8s/employee-consumer-svc.yaml
+	kubectl apply -f ../k8s/ingress.yaml
 
 ## k8-remove: Remove from Kubernetes
 k8-remove:
-	kubectl delete -f ../../k8s/employee-consumer-pod.yaml
-	kubectl delete -f ../../k8s/employee-consumer-svc.yaml
-	kubectl delete -f ../../k8s/ingress.yaml
+	kubectl delete -f ../k8s/employee-consumer-deployment.yaml
+	kubectl delete -f ../k8s/employee-consumer-svc.yaml
+	kubectl delete -f ../k8s/ingress.yaml
+	kubectl delete -f ../k8s/configmap.yaml
+	kubectl delete -f ../k8s/secrets.yaml
