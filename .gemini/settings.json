@@ -12,5 +12,28 @@
     "**/docs/swagger.json",
     "**/docs/swagger.yaml",
     "**/docs/docs.go"
-  ]
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .gemini/hooks/validate.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .gemini/hooks/validate.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
