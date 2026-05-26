@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -46,7 +47,12 @@ type KafkaConsumerServiceImpl struct {
 	deleteWorkerCount   int
 	retryMaxAttempts    int
 	retryInitialBackoff time.Duration
-	processedKeys       sync.Map // key: "topic:partition:offset" → struct{}
+	processedKeys       sync.Map // key: "topic:partition:offset" → struct{}{}
+
+	// shutdown coordination
+	stopOnce sync.Once
+	stopCh   chan struct{} // closed by Stop() to unblock Listen
+	workerWg sync.WaitGroup
 }
 
 func NewKafkaConsumerService(
@@ -63,6 +69,7 @@ func NewKafkaConsumerService(
 		deleteWorkerCount:   utils.ParseIntEnv("KAFKA_CONSUMER_MAX_WORKERS_DELETE", 3),
 		retryMaxAttempts:    utils.ParseIntEnv("KAFKA_CONSUMER_MAX_RETRIES", 3),
 		retryInitialBackoff: time.Duration(utils.ParseIntEnv("KAFKA_CONSUMER_RETRY_INITIAL_BACKOFF_MS", 500)) * time.Millisecond,
+		stopCh:              make(chan struct{}),
 	}
 }
 
@@ -159,7 +166,15 @@ func startWorkerPool(
 
 // ── Listen ───────────────────────────────────────────────────────────────────
 
-func (kSrv *KafkaConsumerServiceImpl) Listen() error {
+// Listen polls Kafka and dispatches messages to per-topic worker pools until
+// ctx is cancelled or an unrecoverable broker error is returned.
+//
+// Shutdown sequence (triggered by ctx cancellation or Stop()):
+//  1. Exit the read loop.
+//  2. Close all per-topic channels → workers drain remaining buffered messages.
+//  3. Wait for all workers to finish (workerWg).
+//  4. Close the Kafka consumer.
+func (kSrv *KafkaConsumerServiceImpl) Listen(ctx context.Context) error {
 	if !isConsumerEnabled() {
 		return nil
 	}
@@ -181,19 +196,38 @@ func (kSrv *KafkaConsumerServiceImpl) Listen() error {
 	updateCh := make(chan *kafka.Message, kSrv.updateWorkerCount)
 	deleteCh := make(chan *kafka.Message, kSrv.deleteWorkerCount)
 
-	var wg sync.WaitGroup
-	startWorkerPool(&wg, employeeInsertTopic, kSrv.insertWorkerCount, insertCh, kSrv.handleInsert)
-	startWorkerPool(&wg, employeeUpdateTopic, kSrv.updateWorkerCount, updateCh, kSrv.handleUpdate)
-	startWorkerPool(&wg, employeeDeleteTopic, kSrv.deleteWorkerCount, deleteCh, kSrv.handleDelete)
+	startWorkerPool(&kSrv.workerWg, employeeInsertTopic, kSrv.insertWorkerCount, insertCh, kSrv.handleInsert)
+	startWorkerPool(&kSrv.workerWg, employeeUpdateTopic, kSrv.updateWorkerCount, updateCh, kSrv.handleUpdate)
+	startWorkerPool(&kSrv.workerWg, employeeDeleteTopic, kSrv.deleteWorkerCount, deleteCh, kSrv.handleDelete)
 
+	// pollTimeout controls how often the read loop checks ctx / stopCh.
+	// Keep it short enough for responsive shutdown without busy-spinning.
+	const pollTimeout = 200 * time.Millisecond
+
+	var readErr error
 	for {
-		msg, err := kSrv.consumer.ReadMessage(-1)
+		// Check for shutdown before every read so a cancel is never missed by
+		// more than one pollTimeout interval.
+		select {
+		case <-ctx.Done():
+			log.Println("Kafka consumer: context cancelled, shutting down")
+			goto drain
+		case <-kSrv.stopCh:
+			log.Println("Kafka consumer: Stop() called, shutting down")
+			goto drain
+		default:
+		}
+
+		msg, err := kSrv.consumer.ReadMessage(pollTimeout)
 		if err != nil {
-			close(insertCh)
-			close(updateCh)
-			close(deleteCh)
-			wg.Wait()
-			return fmt.Errorf("error reading message: %w", err)
+			// Timeout is not an error — it just means no message arrived within
+			// pollTimeout; loop back and re-check the shutdown signal.
+			if kafkaErr, ok := err.(kafka.Error); ok && kafkaErr.Code() == kafka.ErrTimedOut {
+				continue
+			}
+			// Any other error is unrecoverable.
+			readErr = fmt.Errorf("error reading message: %w", err)
+			goto drain
 		}
 
 		if msg == nil || msg.TopicPartition.Topic == nil {
@@ -211,6 +245,31 @@ func (kSrv *KafkaConsumerServiceImpl) Listen() error {
 			log.Printf("received message from unknown topic: %s", *msg.TopicPartition.Topic)
 		}
 	}
+
+drain:
+	// Signal workers to finish by closing their input channels, then wait for
+	// them to drain any buffered messages before closing the Kafka consumer.
+	close(insertCh)
+	close(updateCh)
+	close(deleteCh)
+	kSrv.workerWg.Wait()
+
+	if err := kSrv.consumer.Close(); err != nil {
+		log.Printf("Kafka consumer: error closing consumer: %v", err)
+	}
+	log.Println("Kafka consumer: shutdown complete")
+
+	return readErr
+}
+
+// ── Stop ─────────────────────────────────────────────────────────────────────
+
+// Stop triggers a graceful shutdown of Listen. It is safe to call from any
+// goroutine and is idempotent (subsequent calls are no-ops).
+func (kSrv *KafkaConsumerServiceImpl) Stop() {
+	kSrv.stopOnce.Do(func() {
+		close(kSrv.stopCh)
+	})
 }
 
 // ── Handlers ─────────────────────────────────────────────────────────────────

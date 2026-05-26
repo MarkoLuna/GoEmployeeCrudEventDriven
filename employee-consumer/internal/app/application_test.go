@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
@@ -70,9 +71,11 @@ func TestMain(m *testing.M) {
 	InitServer(dbConnection)
 	os.Setenv("SERVER_SSL_ENABLED", "false")
 	os.Setenv("OAUTH_ENABLED", "false")
-	go App.Run()
+	ctx, cancel := context.WithCancel(context.Background())
+	go App.Run(ctx)
 
 	code := m.Run()
+	cancel()
 	shutdown()
 	os.Exit(code)
 }

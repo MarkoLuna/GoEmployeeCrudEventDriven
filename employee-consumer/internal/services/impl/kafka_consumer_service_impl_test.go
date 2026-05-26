@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -102,8 +103,16 @@ func createEmployeeMessageBytes(t *testing.T, id string, employeeInfo dto.Employ
 	return bytes
 }
 
+// newMockConsumerWithClose returns a MockKafkaConsumer with Close() already stubbed.
+// All tests must call Close() because Listen always closes the consumer on exit.
+func newMockConsumerWithClose() *MockKafkaConsumer {
+	m := new(MockKafkaConsumer)
+	m.On("Close").Return(nil)
+	return m
+}
+
 func TestKafkaConsumerService_Listen_NoErrorsWhenConsumerIsDisabled(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 	mockProducer := new(MockKafkaProducer)
 
@@ -116,14 +125,14 @@ func TestKafkaConsumerService_Listen_NoErrorsWhenConsumerIsDisabled(t *testing.T
 		mockEmployeeService,
 	)
 
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 
 	assert.NoError(t, err)
 	mockConsumer.AssertNotCalled(t, "SubscribeTopics")
 }
 
 func TestKafkaConsumerService_Listen_SuccessfullyDispatchesMessages(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 	mockProducer := new(MockKafkaProducer)
 
@@ -175,7 +184,7 @@ func TestKafkaConsumerService_Listen_SuccessfullyDispatchesMessages(t *testing.T
 		mockEmployeeService,
 	)
 
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "stop loop")
 
@@ -185,7 +194,7 @@ func TestKafkaConsumerService_Listen_SuccessfullyDispatchesMessages(t *testing.T
 }
 
 func TestKafkaConsumerService_Listen_ContinuesOnIndividualErrors(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
@@ -198,8 +207,8 @@ func TestKafkaConsumerService_Listen_ContinuesOnIndividualErrors(t *testing.T) {
 	}
 
 	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
-	mockConsumer.On("ReadMessage", time.Duration(-1)).Return(msgInvalid, nil).Once()
-	mockConsumer.On("ReadMessage", time.Duration(-1)).Return(nil, errors.New("stop loop")).Once()
+	mockConsumer.On("ReadMessage", mock.Anything).Return(msgInvalid, nil).Once()
+	mockConsumer.On("ReadMessage", mock.Anything).Return(nil, errors.New("stop loop")).Once()
 
 	kafkaConsumerService := NewKafkaConsumerService(
 		mockConsumer,
@@ -207,14 +216,14 @@ func TestKafkaConsumerService_Listen_ContinuesOnIndividualErrors(t *testing.T) {
 		mockEmployeeService,
 	)
 
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 	assert.Error(t, err)
 
 	mockEmployeeService.AssertNotCalled(t, "CreateEmployee")
 }
 
 func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
@@ -288,7 +297,7 @@ func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
 		mockEmployeeService,
 	)
 
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "stop loop")
 
@@ -298,7 +307,7 @@ func TestKafkaConsumerService_Listen_ConcurrentWorkers(t *testing.T) {
 }
 
 func TestKafkaConsumerService_Listen_RetriesOnTransientError(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
@@ -324,7 +333,7 @@ func TestKafkaConsumerService_Listen_RetriesOnTransientError(t *testing.T) {
 	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(&models.Employee{Id: "retry-id"}, nil).Once()
 
 	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, new(MockKafkaProducer), mockEmployeeService)
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "stop loop")
@@ -332,7 +341,7 @@ func TestKafkaConsumerService_Listen_RetriesOnTransientError(t *testing.T) {
 }
 
 func TestKafkaConsumerService_Listen_SkipsDuplicateMessages(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 
 	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
@@ -354,7 +363,7 @@ func TestKafkaConsumerService_Listen_SkipsDuplicateMessages(t *testing.T) {
 	mockEmployeeService.On("CreateEmployee", employeeRequest).Return(&models.Employee{Id: "id"}, nil).Once()
 
 	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, new(MockKafkaProducer), mockEmployeeService)
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "stop loop")
@@ -362,7 +371,7 @@ func TestKafkaConsumerService_Listen_SkipsDuplicateMessages(t *testing.T) {
 }
 
 func TestKafkaConsumerService_Listen_SendsToDLTAfterFinalFailure(t *testing.T) {
-	mockConsumer := new(MockKafkaConsumer)
+	mockConsumer := newMockConsumerWithClose()
 	mockEmployeeService := new(MockEmployeeService)
 	mockProducer := new(MockKafkaProducer)
 
@@ -394,13 +403,83 @@ func TestKafkaConsumerService_Listen_SendsToDLTAfterFinalFailure(t *testing.T) {
 	}), mock.Anything).Return(nil).Once()
 
 	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, mockProducer, mockEmployeeService)
-	err := kafkaConsumerService.Listen()
+	err := kafkaConsumerService.Listen(context.Background())
 
 	assert.Error(t, err)
 	mockEmployeeService.AssertExpectations(t)
 	mockProducer.AssertExpectations(t)
 }
 
+// TestKafkaConsumerService_Listen_GracefulShutdownViaContext verifies that
+// cancelling the context causes Listen to return nil (not an error).
+func TestKafkaConsumerService_Listen_GracefulShutdownViaContext(t *testing.T) {
+	mockConsumer := newMockConsumerWithClose()
+	mockEmployeeService := new(MockEmployeeService)
 
+	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
+	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
 
+	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
+	// ReadMessage always times out so Listen keeps polling.
+	mockConsumer.ReadMessageFunc = func(timeout time.Duration) (*kafka.Message, error) {
+		return nil, kafka.NewError(kafka.ErrTimedOut, "timed out", false)
+	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
+	kafkaConsumerService := NewKafkaConsumerService(mockConsumer, new(MockKafkaProducer), mockEmployeeService)
+
+	done := make(chan error, 1)
+	go func() {
+		done <- kafkaConsumerService.Listen(ctx)
+	}()
+
+	// Give Listen time to enter its poll loop, then cancel.
+	time.Sleep(50 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-done:
+		assert.NoError(t, err, "graceful shutdown should return nil")
+	case <-time.After(3 * time.Second):
+		t.Fatal("Listen did not return after context cancellation")
+	}
+}
+
+// TestKafkaConsumerService_Stop_IsIdempotent verifies Stop can be called
+// multiple times without panicking.
+func TestKafkaConsumerService_Stop_IsIdempotent(t *testing.T) {
+	mockConsumer := newMockConsumerWithClose()
+	mockEmployeeService := new(MockEmployeeService)
+
+	os.Setenv("KAFKA_CONSUMER_ENABLED", "true")
+	defer os.Unsetenv("KAFKA_CONSUMER_ENABLED")
+
+	mockConsumer.On("SubscribeTopics", mock.Anything, mock.Anything).Return(nil)
+	mockConsumer.ReadMessageFunc = func(timeout time.Duration) (*kafka.Message, error) {
+		return nil, kafka.NewError(kafka.ErrTimedOut, "timed out", false)
+	}
+
+	svc := NewKafkaConsumerService(mockConsumer, new(MockKafkaProducer), mockEmployeeService)
+
+	done := make(chan error, 1)
+	go func() {
+		done <- svc.Listen(context.Background())
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+
+	// Call Stop multiple times — must not panic.
+	assert.NotPanics(t, func() {
+		svc.Stop()
+		svc.Stop()
+		svc.Stop()
+	})
+
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(3 * time.Second):
+		t.Fatal("Listen did not return after Stop()")
+	}
+}

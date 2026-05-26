@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/app"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/config"
@@ -44,12 +49,30 @@ var (
 // @in header
 // @name Authorization
 func main() {
-	ConfigureApp()
+	// Root context cancelled on SIGINT / SIGTERM so all components shut down together.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Shutdown coordinator manages graceful shutdown of background services.
+	// This follows Dependency Inversion Principle by depending on abstraction.
+	shutdownCoordinator := app.NewWaitGroupCoordinator()
+
+	ConfigureApp(ctx, shutdownCoordinator)
 	defer App.DbConnection.Close()
-	App.Run()
+
+	// Block until the HTTP server exits (which itself waits for the signal).
+	App.Run(ctx)
+
+	// Wait for all background services to complete graceful shutdown.
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := shutdownCoordinator.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Shutdown coordinator error: %v", err)
+	}
+	log.Println("Application shutdown complete")
 }
 
-func ConfigureApp() {
+func ConfigureApp(ctx context.Context, coordinator app.ShutdownCoordinator) {
 	App.EchoInstance = echo.New()
 	if App.DbConnection == nil {
 		App.DbConnection = config.GetDB()
@@ -97,5 +120,7 @@ func ConfigureApp() {
 
 	App.LoadConfiguration()
 
-	go App.EmployeeKafkaConsumerService.Listen()
+	// Launch the Kafka consumer in its own goroutine using the coordinator.
+	// This follows Single Responsibility Principle by separating lifecycle management.
+	coordinator.Start(ctx, "kafka-consumer", App.EmployeeKafkaConsumerService.Listen)
 }

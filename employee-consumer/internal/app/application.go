@@ -1,11 +1,13 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/MarkoLuna/EmployeeConsumer/internal/config"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/controllers"
@@ -52,34 +54,73 @@ func (app *Application) HandleRoutes() {
 	routes.RegisterOAuthRoutes(app.EchoInstance, &app.OAuthController)
 }
 
-func (app *Application) StartServer() {
+func (app *Application) StartServer(ctx context.Context) {
 	app.HandleRoutes()
 	address := app.Address()
 	log.Println("Starting server on:", address)
-	log.Fatal(app.EchoInstance.Start(address))
+
+	// Start the HTTP server in a goroutine so we can wait for ctx cancellation.
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := app.EchoInstance.Start(address); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+		close(serverErr)
+	}()
+
+	select {
+	case err := <-serverErr:
+		if err != nil {
+			log.Fatalf("HTTP server error: %v", err)
+		}
+	case <-ctx.Done():
+		log.Println("HTTP server: shutting down gracefully")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := app.EchoInstance.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTP server: shutdown error: %v", err)
+		}
+	}
 }
 
-func (app *Application) StartSecureServer() {
+func (app *Application) StartSecureServer(ctx context.Context) {
 	app.HandleRoutes()
 	address := app.Address()
 	log.Println("Starting server on:", address)
 
-	// path := "/Users/marcos.luna/go-projects/GoEmployeeCrudEventDriven/EmployeeConsumer"
 	path, _ := filepath.Abs("../../resources/ssl/cert.pem")
 	certFile := utils.GetEnv("SERVER_SSL_CERT_FILE_PATH", path+"/resources/ssl/cert.pem")
 	keyFile := utils.GetEnv("SERVER_SSL_KEY_FILE_PATH", path+"/resources/ssl/key.pem")
 
-	if err := app.EchoInstance.StartTLS(address, certFile, keyFile); err != http.ErrServerClosed {
-		log.Fatal(err)
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := app.EchoInstance.StartTLS(address, certFile, keyFile); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+		close(serverErr)
+	}()
+
+	select {
+	case err := <-serverErr:
+		if err != nil {
+			log.Fatalf("HTTPS server error: %v", err)
+		}
+	case <-ctx.Done():
+		log.Println("HTTPS server: shutting down gracefully")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := app.EchoInstance.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTPS server: shutdown error: %v", err)
+		}
 	}
 }
 
-func (app *Application) Run() {
+func (app *Application) Run(ctx context.Context) {
 	server_ssl_enabled := utils.GetEnv("SERVER_SSL_ENABLED", "false")
 	ssl_enabled, _ := strconv.ParseBool(server_ssl_enabled)
 	if ssl_enabled {
-		app.StartSecureServer()
+		app.StartSecureServer(ctx)
 	} else {
-		app.StartServer()
+		app.StartServer(ctx)
 	}
 }
