@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/MarkoLuna/EmployeeService/internal/models"
-	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,6 @@ var (
 )
 
 func InitServer() {
-	App.OAuthService = stubs.NewOAuthServiceStub()
 	go main()
 }
 

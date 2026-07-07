@@ -11,6 +11,11 @@ GoEmployeeCrudEventDriven/
 │   ├── dto/               # Shared Data Transfer Objects
 │   ├── services/          # Shared service interfaces and implementations
 │   └── utils/             # Shared utility functions
+├── auth-service/          # Authentication & user management microservice
+│   ├── cmd/               # Entry points (api-server)
+│   ├── docs/              # Swagger documentation
+│   ├── internal/          # Private auth logic (Controllers, Services, Repositories)
+│   └── pkg/               # Publicly exportable packages (if any)
 ├── employee-service/      # Main CRUD microservice (Producer)
 │   ├── cmd/               # Entry points (api-server)
 │   ├── docs/              # Swagger documentation
@@ -32,6 +37,11 @@ GoEmployeeCrudEventDriven/
 The **Shared Source of Truth**. This is a standalone Go module containing code that must be consistent across all services. 
 - **Location**: `/common`
 - **Import Path**: `github.com/MarkoLuna/GoEmployeeCrudEventDriven/common`
+
+### `auth-service/`
+Responsible for authentication, token generation, and user management. Provides OAuth2 token endpoints and user CRUD operations.
+- **Internal Pattern**: Uses `controllers` -> `services` -> `repositories`.
+- **Integration**: Imports `common/dto` and `common/services/auth` for shared OAuth interface.
 
 ### `employee-service/`
 Responsible for the REST API and producing Kafka events when employees are created or updated.

@@ -1,62 +1,55 @@
 package config
 
 import (
-	"errors"
+	"net/http"
 	"strings"
 
-	"github.com/MarkoLuna/EmployeeConsumer/internal/services"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
-
 	"github.com/labstack/echo/v4"
-	echojwt "github.com/labstack/echo-jwt/v4"
 )
 
 var (
 	DefaultSkippedPaths = [...]string{
 		"/healthcheck/",
-		"/oauth/token",
 		"/swagger/",
 	}
 )
 
-var (
-	signingKey = utils.GetEnv("OAUTH_SIGNING_KEY", "00000000")
-)
-
 type AuthConfig struct {
-	EnableAuth   bool
-	SkippedPaths []string
-	OAuthService services.OAuthService
+	EnableAuth       bool
+	SkippedPaths     []string
+	ValidationClient *auth.TokenValidationClient
 }
 
-func NewAuthConfig(echoInstance *echo.Echo, enableAuth bool, skippedPaths []string, authService services.OAuthService) {
+func NewAuthConfig(echoInstance *echo.Echo, enableAuth bool, skippedPaths []string, validationClient *auth.TokenValidationClient) {
 	if enableAuth {
-		authConfig := AuthConfig{EnableAuth: enableAuth, SkippedPaths: skippedPaths, OAuthService: authService}
+		authConfig := AuthConfig{
+			EnableAuth:       enableAuth,
+			SkippedPaths:     skippedPaths,
+			ValidationClient: validationClient,
+		}
 
-		defaultJWTConfig := echojwt.Config{
-			SigningKey: []byte(signingKey),
-			Skipper: func(e echo.Context) bool {
-				return authConfig.isSkippedPath(e.Request().URL.Path)
-			},
-			ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
+		echoInstance.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				if authConfig.isSkippedPath(c.Request().URL.Path) {
+					return next(c)
+				}
 
 				accessToken, ok := utils.GetBearerAuth(c.Request().Header)
 				if !ok {
-					return nil, errors.New("invalid token")
+					return c.String(http.StatusUnauthorized, "invalid token")
 				}
-				token, err := authConfig.OAuthService.ParseToken(accessToken)
+
+				claims, err := authConfig.ValidationClient.ValidateToken(accessToken)
 				if err != nil {
-					return nil, err
+					return c.String(http.StatusUnauthorized, err.Error())
 				}
 
-				if !token.Valid {
-					return nil, errors.New("invalid token")
-				}
-				return token, nil
-			},
-		}
-
-		echoInstance.Use(echojwt.WithConfig(defaultJWTConfig))
+				c.Set("claims", claims)
+				return next(c)
+			}
+		})
 	}
 }
 
@@ -66,6 +59,5 @@ func (authConfig AuthConfig) isSkippedPath(path string) bool {
 			return true
 		}
 	}
-
 	return false
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/internal/controllers"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services/impl"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/services/stubs"
 	"github.com/labstack/echo/v4"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -31,20 +30,18 @@ var (
 	sqlMock      sqlmock.Sqlmock
 )
 
-func InitServer(db_connection *sql.DB) {
+func InitServer(dbConnection *sql.DB) {
 	App.EchoInstance = echo.New()
-	App.DbConnection = db_connection
+	App.DbConnection = dbConnection
 	App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, false)
 	App.EmployeeService = impl.NewEmployeeService(App.EmployeeRepository)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
-	App.OAuthService = stubs.NewOAuthServiceStub()
 
 	App.LoadConfiguration()
 }
 
 type AnyUUID struct{}
 
-// Match satisfies sqlmock.Argument interface
 func (a AnyUUID) Match(v driver.Value) bool {
 	value, ok := v.(string)
 	if ok {
@@ -60,7 +57,6 @@ func NewMock() (*sql.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		log.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-
 	return db, mock
 }
 
@@ -85,7 +81,6 @@ func shutdown() {
 }
 
 func TestHealthCheck(t *testing.T) {
-
 	url := fmt.Sprintf("%s/healthcheck/", basePath)
 	resp := makeRequest("GET", url, nil)
 
@@ -93,7 +88,6 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestHealthCheckWithSsl(t *testing.T) {
-
 	t.Skip("Skipping test: need to refactor this unit tests logic")
 	os.Setenv("SERVER_PORT", "8082")
 	os.Setenv("SERVER_SSL_ENABLED", "true")

@@ -5,6 +5,8 @@ The project is split into two services that communicate over **Apache Kafka**:
 
 | Service | Port | Description |
 |---|---|---|
+| `keycloak-x` | `8084` | OIDC provider (Keycloak realm, token issuer) |
+| `auth-service` | `8082` | Authentication, token generation, user management |
 | `employee-service` | `8080` | REST API — CRUD operations, publishes Kafka events |
 | `employee-consumer` | `8081` | Kafka consumer — processes events, stores/syncs data |
 
@@ -61,7 +63,8 @@ graph TD
     end
 
     subgraph Authentication
-        Auth[Keycloak]
+        AuthService[Auth Service]
+        Keycloak[Keycloak]
     end
 
     subgraph Microservices
@@ -78,8 +81,10 @@ graph TD
     end
 
     Client -->|HTTP/REST| Service
-    Service -->|JWT/OAuth2| Auth
-    Consumer -->|JWT/OAuth2| Auth
+    Service -->|JWT Validation| AuthService
+    Consumer -->|JWT Validation| AuthService
+    AuthService -->|Keycloak Mode| Keycloak
+    AuthService -->|Local Mode| DB
     Service -->|HTTP Read-Proxy| Consumer
     Service -->|Produce Events| Kafka
     Kafka -->|Consume Events| Consumer
@@ -102,6 +107,7 @@ graph TD
         Ingress[NGINX Ingress]
         ServicePod[Employee Service Pod]
         ConsumerPod[Employee Consumer Pod]
+        AuthPod[Auth Service Pod]
     end
 
     subgraph "Infrastructure Nodes"
@@ -113,12 +119,15 @@ graph TD
     Client -->|HTTPS| Ingress
     Ingress -->|HTTP| ServicePod
     Ingress -->|HTTP| ConsumerPod
+    Ingress -->|HTTP| AuthPod
     
-    ServicePod -->|JWT| Keycloak
+    ServicePod -->|JWT| AuthPod
+    ConsumerPod -->|JWT| AuthPod
+    AuthPod -->|Keycloak Mode| Keycloak
+    AuthPod -->|Local Mode| DB
     ServicePod -->|Produce| Kafka
     ServicePod -->|HTTP| ConsumerPod
     
-    ConsumerPod -->|JWT| Keycloak
     ConsumerPod -->|Consume| Kafka
     ConsumerPod -->|SQL| DB
 ```
@@ -250,12 +259,12 @@ xcode-select --install
 Each service connects to a PostgreSQL database. Default connection values:
 
 | Variable | Default |
-|---|---|
+|---|---|---|
 | `DB_HOST` | `localhost` |
-| `DB_PORT` | `5432` (service) / `5433` (consumer) |
-| `DB_NAME` | `employee_db` |
-| `DB_USER` | `employee_user` |
-| `DB_PASSWORD` | `employeepw` |
+| `DB_PORT` | `5432` (service) / `5433` (consumer) / `5434` (auth) |
+| `DB_NAME` | `employee_db` (service/consumer) / `auth_db` (auth) |
+| `DB_USER` | `employee_user` (service/consumer) / `auth_user` (auth) |
+| `DB_PASSWORD` | `employeepw` (service/consumer) / `authpw` (auth) |
 | `DB_DRIVER_NAME` | `postgres` |
 
 The database schema is initialized automatically when using Docker Compose via `resources/init.sql`:
@@ -306,8 +315,21 @@ KAFKA_CONSUMER_GROUP_ID=employee-group
 ### Install dependencies (run inside each service directory)
 
 ```bash
+cd auth-service && go mod tidy
 cd employee-service && go mod tidy
 cd employee-consumer && go mod tidy
+```
+
+### Run auth-service
+
+```bash
+cd auth-service
+
+# directly
+go run cmd/api-server/main.go
+
+# or with make
+make run
 ```
 
 ### Run employee-service
@@ -392,10 +414,16 @@ cd employee-consumer && make test
 ## Healthcheck
 
 ```bash
-# employee-service (port 8080)
+# keycloak
+curl -X GET http://localhost:8084/realms/dev/
+
+# auth-service
+curl -X GET http://localhost:8082/healthcheck/
+
+# employee-service
 curl -X GET http://localhost:8080/healthcheck/
 
-# employee-consumer (port 8081)
+# employee-consumer
 curl -X GET http://localhost:8081/healthcheck/
 ```
 
@@ -404,16 +432,23 @@ curl -X GET http://localhost:8081/healthcheck/
 ## Swagger UI
 
 ```
+http://localhost:8082/swagger/   # auth-service
 http://localhost:8080/swagger/   # employee-service
 http://localhost:8081/swagger/   # employee-consumer
 ```
 
 To regenerate Swagger docs after changing annotations:
+
 ```bash
-# Run from inside the service directory
-swag init --dir cmd/api-server,internal
+# auth-service (--parseDependency resolves common/dto types)
+cd auth-service && swag init --dir cmd/api-server,internal --parseDependency
+
+# employee-service / employee-consumer
+cd employee-service && swag init --dir cmd/api-server,internal
+cd employee-consumer && swag init --dir cmd/api-server,internal
 ```
-Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is corrent. 
+
+Making sure [go-swagger](https://github.com/go-swagger/go-swagger?tab=readme-ov-file#installing) is installed and [GOPATH](https://go.dev/wiki/SettingGOPATH#unix-systems) env is correct. 
 
 ## Running with Kubernetes
 
@@ -455,6 +490,9 @@ Once the infrastructure dependencies are ready, build and apply the shared confi
 Ensure your local Kubernetes cluster can access the images (if using Minikube, run `eval $(minikube docker-env)` first in your terminal before building):
 
 ```bash
+# Build auth-service
+cd auth-service && make docker-build && cd ..
+
 # Build employee-service
 cd employee-service && make docker-build && cd ..
 
@@ -463,9 +501,12 @@ cd employee-consumer && make docker-build && cd ..
 ```
 
 #### Step B: Apply Configurations, Services, and Ingress
-You can deploy both services using their Makefiles, which will automatically apply the shared ConfigMap, Secrets, Deployments, and Ingress:
+You can deploy the services using their Makefiles, which will automatically apply the shared ConfigMap, Secrets, Deployments, and Ingress:
 
 ```bash
+# Deploy auth-service
+cd auth-service && make k8-apply && cd ..
+
 # Deploy employee-service
 cd employee-service && make k8-apply && cd ..
 
@@ -478,6 +519,9 @@ Alternatively, you can apply them manually using `kubectl`:
 # Apply shared ConfigMap and Secrets
 kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/secrets.yaml
+
+# Apply auth-service (Auth / User Management)
+kubectl apply -f k8s/auth-service-svc.yaml -f k8s/auth-service-deployment.yaml
 
 # Apply employee-service (API / Producer)
 kubectl apply -f k8s/employee-service-svc.yaml -f k8s/employee-service-deployment.yaml

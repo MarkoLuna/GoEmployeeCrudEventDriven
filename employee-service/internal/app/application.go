@@ -11,29 +11,27 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
 	"github.com/MarkoLuna/EmployeeService/internal/routes"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
+	commonAuth "github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/labstack/echo/v4"
 )
 
 type Application struct {
 	EchoInstance                  *echo.Echo
-	OAuthService                  services.OAuthService
 	EmployeeService               services.EmployeeService
-	ClientService                 services.ClientService
-	UserService                   services.UserService
 	EmployeeController                   controllers.EmployeeController
-	OAuthController                      controllers.OAuthController
 	EmployeeConsumerServiceClientBuilder *clients.EmployeeConsumerServiceClientBuilder
 	KafkaProducerService                 services.KafkaProducerService
+	ValidationClient                     *commonAuth.TokenValidationClient
 }
 
 func (app *Application) LoadConfiguration() {
 	config.EnableCORS(app.EchoInstance)
 	config.ConfigureLogging()
 
-	server_auth_enabled := utils.GetEnv("OAUTH_ENABLED", "false")
-	auth_enabled, _ := strconv.ParseBool(server_auth_enabled)
-	config.NewAuthConfig(app.EchoInstance, auth_enabled, config.DefaultSkippedPaths[:], app.OAuthService)
+	serverAuthEnabled := utils.GetEnv("OAUTH_ENABLED", "false")
+	authEnabled, _ := strconv.ParseBool(serverAuthEnabled)
+	config.NewAuthConfig(app.EchoInstance, authEnabled, config.DefaultSkippedPaths[:], app.ValidationClient)
 }
 
 func (app *Application) Address() string {
@@ -47,7 +45,6 @@ func (app *Application) HandleRoutes() {
 	routes.RegisterSwaggerRoute(app.EchoInstance)
 	routes.RegisterHealthcheckRoute(app.EchoInstance)
 	routes.RegisterEmployeeStoreRoutes(app.EchoInstance, &app.EmployeeController)
-	routes.RegisterOAuthRoutes(app.EchoInstance, &app.OAuthController)
 }
 
 func (app *Application) StartServer() {
@@ -62,7 +59,6 @@ func (app *Application) StartSecureServer() {
 	address := app.Address()
 	log.Println("Starting server on:", address)
 
-	// path := "/Users/marcos.luna/go-projects/GoEmployeeCrudEventDriven/EmployeeService"
 	path, _ := filepath.Abs("../../resources/ssl/cert.pem")
 	certFile := utils.GetEnv("SERVER_SSL_CERT_FILE_PATH", path+"/resources/ssl/cert.pem")
 	keyFile := utils.GetEnv("SERVER_SSL_KEY_FILE_PATH", path+"/resources/ssl/key.pem")
@@ -73,9 +69,9 @@ func (app *Application) StartSecureServer() {
 }
 
 func (app *Application) Run() {
-	server_ssl_enabled := utils.GetEnv("SERVER_SSL_ENABLED", "false")
-	ssl_enabled, _ := strconv.ParseBool(server_ssl_enabled)
-	if ssl_enabled {
+	serverSslEnabled := utils.GetEnv("SERVER_SSL_ENABLED", "false")
+	sslEnabled, _ := strconv.ParseBool(serverSslEnabled)
+	if sslEnabled {
 		app.StartSecureServer()
 	} else {
 		app.StartServer()

@@ -18,9 +18,3 @@ func RegisterEmployeeStoreRoutes(echoInstance *echo.Echo, employeeController *co
 func RegisterHealthcheckRoute(echoInstance *echo.Echo) {
 	echoInstance.GET("/healthcheck/", controllers.HealthCheckHandler)
 }
-
-func RegisterOAuthRoutes(echoInstance *echo.Echo, oauthController *controllers.OAuthController) {
-	oauthGroup := echoInstance.Group("/oauth")
-	oauthGroup.POST("/token", oauthController.TokenHandler)
-	oauthGroup.GET("/userinfo", oauthController.GetUserInfo)
-}

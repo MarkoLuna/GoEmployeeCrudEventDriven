@@ -30,20 +30,18 @@ var (
 	sqlMock      sqlmock.Sqlmock
 )
 
-func InitServer(db_connection *sql.DB) {
+func InitServer(dbConnection *sql.DB) {
 	App.EchoInstance = echo.New()
 	App.EmployeeConsumerServiceClientBuilder = clients.NewEmployeeConsumerServiceClientBuilder().WithCustomInstance(clients.NewEmployeeConsumerServiceStub())
 	App.KafkaProducerService = stubs.NewKafkaProducerServiceStub()
 	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClientBuilder, App.KafkaProducerService)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
-	App.OAuthService = stubs.NewOAuthServiceStub()
 
 	App.LoadConfiguration()
 }
 
 type AnyUUID struct{}
 
-// Match satisfies sqlmock.Argument interface
 func (a AnyUUID) Match(v driver.Value) bool {
 	value, ok := v.(string)
 	if ok {
@@ -59,7 +57,6 @@ func NewMock() (*sql.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		log.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-
 	return db, mock
 }
 
@@ -82,7 +79,6 @@ func shutdown() {
 }
 
 func TestHealthCheck(t *testing.T) {
-
 	url := fmt.Sprintf("%s/healthcheck/", basePath)
 	resp := makeRequest("GET", url, nil)
 
@@ -90,7 +86,6 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestHealthCheckWithSsl(t *testing.T) {
-
 	t.Skip("Skipping test: need to refactor this unit tests logic")
 	os.Setenv("SERVER_PORT", "8081")
 	os.Setenv("SERVER_SSL_ENABLED", "true")

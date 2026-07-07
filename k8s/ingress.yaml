@@ -31,5 +31,13 @@ spec:
                 name: employee-consumer-service
                 port:
                   number: 8080
+          # service: auth-service (Auth / User Management)
+          - path: /auth-service(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 8080
 
 # kubectl apply -f k8s/ingress.yaml

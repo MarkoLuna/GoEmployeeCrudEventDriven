@@ -89,18 +89,6 @@ $ curl --location --request POST 'http://localhost:8081/api/employee/' \
     "status": "ACTIVE"
 }'
 
-# delete employee
-$ curl -X DELETE 'http://localhost:8081/api/employee/2'
-
-# update employee
-$ curl --location --request PUT 'http://localhost:8081/api/employee/3' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "firstName": "Gerardo",
-    "lastName": "Luna",
-    "secondLastName": "Valdezz",
-    "dateOfBirth": "1994-04-25T12:00:00Z",
-    "dateOfEmployment": "0001-01-01T00:00:00Z",
-    "status": "INACTIVE"
-}'
+# Authentication is handled by the external auth-service (port 8082)
+# See auth-service/README.md for auth endpoint documentation
 ```
