@@ -17,13 +17,9 @@ data:
 
   # OAuth Configuration
   OAUTH_ENABLED: "true"
-  OAUTH_PROVIDER: "keycloak"
-  KEYCLOAK_AUTH_SERVER_URL: "http://keycloak-service:8080"
-  KEYCLOAK_REALM: "dev"
-  OAUTH_CLIENT_ID: "client"
-  OAUTH_USER_ID: "000000"
-  OAUTH_USER_NAME: "user"
-  OAUTH_SIGNING_KEY: "00000000"
+
+  # Auth Service URL
+  AUTH_SERVICE_URL: "http://auth-service:8080"
 
   # Kafka Configuration
   KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"

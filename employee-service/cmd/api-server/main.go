@@ -7,13 +7,10 @@ import (
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
 	"github.com/MarkoLuna/EmployeeService/internal/config"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
-	"github.com/MarkoLuna/EmployeeService/internal/factories"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/impl"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
-	"github.com/go-oauth2/oauth2/v4/manage"
-	"github.com/go-oauth2/oauth2/v4/server"
-	"github.com/go-oauth2/oauth2/v4/store"
 	"github.com/labstack/echo/v4"
 
 	_ "github.com/MarkoLuna/EmployeeService/docs"
@@ -67,27 +64,11 @@ func ConfigureApp() {
 	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClientBuilder, App.KafkaProducerService)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
 
-	App.ClientService = services.NewClientService()
-	App.UserService = services.NewUserService()
+	App.ValidationClient = auth.NewTokenValidationClient(
+		utils.GetEnv("AUTH_SERVICE_URL", "http://localhost:8082"),
+	)
 
-	oauthProvider := utils.GetEnv("OAUTH_PROVIDER", "local")
-	log.Println("OAuth Provider: ", oauthProvider)
-
-	authProviderFactory := factories.GetOAuthProviderFactory(oauthProvider)
-	App.OAuthService = authProviderFactory()
-
-	manager := manage.NewDefaultManager()
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
-
-	// token memory store
-	manager.MustTokenStorage(store.NewMemoryTokenStore())
-
-	oauthServer := server.NewDefaultServer(manager)
-	oauthServer.SetAllowGetAccessRequest(true)
-	oauthServer.SetClientInfoHandler(server.ClientFormHandler)
-	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
-
-	App.OAuthController = controllers.NewOAuthController(oauthServer, App.OAuthService, App.ClientService, App.UserService)
+	log.Println("OAuth handled by external auth-service")
 
 	App.LoadConfiguration()
 }

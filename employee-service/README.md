@@ -59,4 +59,7 @@ $ curl --location --request PUT 'http://localhost:8080/api/employee/3' \
     "dateOfEmployment": "0001-01-01T00:00:00Z",
     "status": "INACTIVE"
 }'
+
+# Authentication is handled by the external auth-service (port 8082)
+# See auth-service/README.md for auth endpoint documentation
 ```

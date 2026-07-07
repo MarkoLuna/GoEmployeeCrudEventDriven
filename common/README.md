@@ -4,7 +4,7 @@ This module repository houses the shared logic, constants, and data transfer obj
 
 ## Purpose
 
-The `common` module is designed to eliminate code duplication and ensure consistency across the services (`employee-service` and `employee-consumer`). It provides standardized implementations for:
+The `common` module is designed to eliminate code duplication and ensure consistency across the services (`auth-service`, `employee-service`, and `employee-consumer`). It provides standardized implementations for:
 - **Authentication**: Unified OAuth interfaces and Keycloak RS256 validation.
 - **Environment Management**: Consistent configuration parsing.
 - **Data Schemas**: Shared DTOs for Kafka messages and REST requests.

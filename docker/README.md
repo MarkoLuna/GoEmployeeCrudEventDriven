@@ -27,7 +27,7 @@ The stack exposes several services to your host machine for development and moni
 |---|---|---|---|
 | **Employee Service** | `employee-service` | `8080` | Go CRUD API (REST) |
 | **Employee Consumer** | `employee-consumer` | `8081` | Go Kafka Consumer / Internal API |
-| **Keycloak** | `ws-keycloak-x` | `8082` | IAM Server (OIDC/SAML) |
+| **Keycloak** | `ws-keycloak-x` | `8084` | IAM Server (OIDC/SAML) |
 | **Kafka** | `kafka` | `9092` | Message Broker |
 | **PostgreSQL (App)** | `postgres_db` | `5433` | Database for Employee Services |
 | **PostgreSQL (IAM)** | `ws-keycloak-x-pg` | `5432` | Database for Keycloak |
@@ -40,7 +40,7 @@ The stack exposes several services to your host machine for development and moni
 The environment comes with a pre-configured Keycloak instance.
 
 ### Admin Console
-- **URL**: [http://localhost:8082](http://localhost:8082)
+- **URL**: [http://localhost:8084](http://localhost:8084)
 - **User**: `dev`
 - **Password**: `dev`
 
@@ -50,7 +50,7 @@ You can use the following `curl` commands to obtain access tokens for testing th
 
 #### 🌍 Master Realm (Admin)
 ```bash
-curl --location 'http://localhost:8082/realms/master/protocol/openid-connect/token' \
+curl --location 'http://localhost:8084/realms/master/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'client_id=master-client' \
 --data-urlencode 'client_secret=z6vxpf3uzvJLlsErs9oufAyolCYFvEos' \
@@ -64,7 +64,7 @@ The `dev` realm is imported automatically on startup from `./keycloak/import/dev
 
 **User: John Doe**
 ```bash
-curl --location 'http://localhost:8082/realms/dev/protocol/openid-connect/token' \
+curl --location 'http://localhost:8084/realms/dev/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'client_id=newClient' \
 --data-urlencode 'client_secret=newClientSecret' \
@@ -75,7 +75,7 @@ curl --location 'http://localhost:8082/realms/dev/protocol/openid-connect/token'
 
 **User: Mike Smith**
 ```bash
-curl --location 'http://localhost:8082/realms/dev/protocol/openid-connect/token' \
+curl --location 'http://localhost:8084/realms/dev/protocol/openid-connect/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'client_id=newClient' \
 --data-urlencode 'client_secret=newClientSecret' \

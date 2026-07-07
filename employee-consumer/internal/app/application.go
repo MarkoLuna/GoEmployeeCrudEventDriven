@@ -14,6 +14,7 @@ import (
 	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/routes"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/services"
+	commonAuth "github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/services/auth"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -22,28 +23,24 @@ type Application struct {
 	EchoInstance                 *echo.Echo
 	DbConnection                 *sql.DB
 	EmployeeService              services.EmployeeService
-	ClientService                services.ClientService
-	UserService                  services.UserService
-	OAuthService                 services.OAuthService
 	EmployeeKafkaConsumerService services.KafkaConsumerService
 	EmployeeRepository           repositories.EmployeeRepository
 	EmployeeController           controllers.EmployeeController
-	OAuthController              controllers.OAuthController
+	ValidationClient             *commonAuth.TokenValidationClient
 }
 
 func (app *Application) LoadConfiguration() {
 	config.EnableCORS(app.EchoInstance)
 	config.ConfigureLogging()
 
-	server_auth_enabled := utils.GetEnv("OAUTH_ENABLED", "false")
-	auth_enabled, _ := strconv.ParseBool(server_auth_enabled)
-	config.NewAuthConfig(app.EchoInstance, auth_enabled, config.DefaultSkippedPaths[:], app.OAuthService)
+	serverAuthEnabled := utils.GetEnv("OAUTH_ENABLED", "false")
+	authEnabled, _ := strconv.ParseBool(serverAuthEnabled)
+	config.NewAuthConfig(app.EchoInstance, authEnabled, config.DefaultSkippedPaths[:], app.ValidationClient)
 }
 
 func (app *Application) Address() string {
 	port := utils.GetEnv("SERVER_PORT", "8081")
 	host := utils.GetEnv("SERVER_HOST", "0.0.0.0")
-
 	return host + ":" + port
 }
 
@@ -51,7 +48,6 @@ func (app *Application) HandleRoutes() {
 	routes.RegisterSwaggerRoute(app.EchoInstance)
 	routes.RegisterHealthcheckRoute(app.EchoInstance)
 	routes.RegisterEmployeeStoreRoutes(app.EchoInstance, &app.EmployeeController)
-	routes.RegisterOAuthRoutes(app.EchoInstance, &app.OAuthController)
 }
 
 func (app *Application) StartServer(ctx context.Context) {
@@ -59,7 +55,6 @@ func (app *Application) StartServer(ctx context.Context) {
 	address := app.Address()
 	log.Println("Starting server on:", address)
 
-	// Start the HTTP server in a goroutine so we can wait for ctx cancellation.
 	serverErr := make(chan error, 1)
 	go func() {
 		if err := app.EchoInstance.Start(address); err != nil && err != http.ErrServerClosed {
@@ -116,9 +111,9 @@ func (app *Application) StartSecureServer(ctx context.Context) {
 }
 
 func (app *Application) Run(ctx context.Context) {
-	server_ssl_enabled := utils.GetEnv("SERVER_SSL_ENABLED", "false")
-	ssl_enabled, _ := strconv.ParseBool(server_ssl_enabled)
-	if ssl_enabled {
+	serverSslEnabled := utils.GetEnv("SERVER_SSL_ENABLED", "false")
+	sslEnabled, _ := strconv.ParseBool(serverSslEnabled)
+	if sslEnabled {
 		app.StartSecureServer(ctx)
 	} else {
 		app.StartServer(ctx)

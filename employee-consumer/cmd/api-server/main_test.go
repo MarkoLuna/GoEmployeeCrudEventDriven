@@ -15,7 +15,6 @@ import (
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/models"
 	"github.com/MarkoLuna/EmployeeConsumer/internal/repositories"
-	"github.com/MarkoLuna/EmployeeConsumer/internal/services/stubs"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +27,6 @@ var (
 func InitServer(dbConnection *sql.DB) {
 	App.DbConnection = dbConnection
 	App.EmployeeRepository = repositories.NewEmployeeRepository(App.DbConnection, false)
-	App.OAuthService = stubs.NewOAuthServiceStub()
 	go main()
 }
 

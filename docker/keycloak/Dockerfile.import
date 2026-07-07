@@ -1,0 +1,5 @@
+FROM docker.io/keycloak/keycloak:26.4
+
+COPY keycloak/import/dev-realm/dev-realm.json /tmp/dev-realm.json
+
+CMD ["import", "--file", "/tmp/dev-realm.json"]
