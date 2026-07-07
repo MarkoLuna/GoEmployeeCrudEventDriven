@@ -62,4 +62,16 @@ $ curl --location --request PUT 'http://localhost:8080/api/employee/3' \
 
 # Authentication is handled by the external auth-service (port 8082)
 # See auth-service/README.md for auth endpoint documentation
+
+## Fault Tolerance
+
+This service includes built-in resilience for inter-service HTTP communication:
+
+- **Circuit Breaker**: HTTP calls to `employee-consumer` are protected by a circuit breaker (sony/gobreaker). See `internal/clients/circuit_breaker.go`.
+- **Retry with Backoff**: Transient failures trigger up to 3 retries with exponential or linear backoff (default exponential). See `internal/clients/retry.go`.
+- **Context Propagation**: All HTTP calls use `context.Context` with configurable timeout (`HTTP_TIMEOUT`, default 30s).
+- **Kafka Idempotence**: The Kafka producer uses `enable.idempotence=true` for exactly-once semantics.
+- **Async API**: Write operations return `202 Accepted` immediately, decoupling from consumer processing.
+
+See the main [README.md](../README.md#fault-tolerance) for a full overview.
 ```

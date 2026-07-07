@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -45,7 +46,7 @@ func TestEmployeeConsumerServiceClientImpl_Create_Success(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	result, err := serviceClient.Create(expectedEmployee)
+	result, err := serviceClient.Create(context.Background(), expectedEmployee)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedEmployee.Id, result.Id)
@@ -69,7 +70,7 @@ func TestEmployeeConsumerServiceClientImpl_Create_ErrorFromService(t *testing.T)
 		serviceHost: server.URL,
 	}
 
-	_, err := serviceClient.Create(validEmployee)
+	_, err := serviceClient.Create(context.Background(), validEmployee)
 	assert.Error(t, err)
 }
 
@@ -105,7 +106,7 @@ func TestEmployeeConsumerServiceClientImpl_FindAll_Success(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	result, err := serviceClient.FindAll()
+	result, err := serviceClient.FindAll(context.Background())
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(result))
@@ -128,7 +129,7 @@ func TestEmployeeConsumerServiceClientImpl_FindAll_EmptyList(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	result, err := serviceClient.FindAll()
+	result, err := serviceClient.FindAll(context.Background())
 
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(result))
@@ -154,7 +155,7 @@ func TestEmployeeConsumerServiceClientImpl_FindById_Success(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	result, err := serviceClient.FindById("123")
+	result, err := serviceClient.FindById(context.Background(), "123")
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedEmployee.Id, result.Id)
@@ -176,7 +177,7 @@ func TestEmployeeConsumerServiceClientImpl_FindById_NotFound(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	_, err := serviceClient.FindById("999")
+	_, err := serviceClient.FindById(context.Background(), "999")
 
 	assert.Error(t, err)
 }
@@ -198,7 +199,7 @@ func TestEmployeeConsumerServiceClientImpl_DeleteById_Success(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	err := serviceClient.DeleteById("123")
+	err := serviceClient.DeleteById(context.Background(), "123")
 
 	assert.NoError(t, err)
 }
@@ -217,7 +218,7 @@ func TestEmployeeConsumerServiceClientImpl_DeleteById_NotFound(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	err := serviceClient.DeleteById("999")
+	err := serviceClient.DeleteById(context.Background(), "999")
 
 	assert.NoError(t, err)
 }
@@ -244,7 +245,7 @@ func TestEmployeeConsumerServiceClientImpl_Update_Success(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	result, err := serviceClient.Update(employeeToUpdate)
+	result, err := serviceClient.Update(context.Background(), employeeToUpdate)
 
 	assert.NoError(t, err)
 	assert.Equal(t, employeeToUpdate.Id, result.Id)
@@ -267,7 +268,7 @@ func TestEmployeeConsumerServiceClientImpl_Update_NotFound(t *testing.T) {
 		serviceHost: server.URL,
 	}
 
-	_, err := serviceClient.Update(employee)
+	_, err := serviceClient.Update(context.Background(), employee)
 
 	assert.Error(t, err)
 }

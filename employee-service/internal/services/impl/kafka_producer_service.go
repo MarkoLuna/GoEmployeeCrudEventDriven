@@ -2,11 +2,17 @@ package impl
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+)
+
+const (
+	producerDeliveryTimeout = 10 * time.Second
 )
 
 var (
@@ -23,69 +29,58 @@ func NewKafkaProducerService(kafkaProducer *kafka.Producer) KafkaProducerService
 	return KafkaProducerService{producer: kafkaProducer}
 }
 
-func (kSrv KafkaProducerService) SendInsert(employee dto.EmployeeMessage) error {
-
-	value, err := json.Marshal(employee)
-	if err != nil {
-		panic(err)
-	}
-
-	err = kSrv.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{
-			Topic:     &employeeInsertTopic,
-			Partition: kafka.PartitionAny},
-		Value: value,
-	}, nil)
-
-	if err != nil {
-		log.Printf("error producing message: %v for topic: %s", err, employeeInsertTopic)
-	} else {
-		log.Printf("message produced successfully on topic: %s with value: %v",
-			employeeInsertTopic, employee)
-	}
-
-	return err
-}
-
-func (kSrv KafkaProducerService) SendUpdate(employee dto.EmployeeMessage) error {
-
-	value, err := json.Marshal(employee)
-	if err != nil {
-		panic(err)
-	}
-
-	err = kSrv.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{
-			Topic:     &employeeUpdateTopic,
-			Partition: kafka.PartitionAny},
-		Value: value,
-	}, nil)
-
-	if err != nil {
-		log.Printf("error producing message: %v for topic: %s", err, employeeUpdateTopic)
-	} else {
-		log.Printf("message produced successfully on topic: %s with value: %v",
-			employeeUpdateTopic, employee)
-	}
-
-	return err
-}
-
-func (kSrv KafkaProducerService) SendDelete(employeeId string) error {
+func (kSrv KafkaProducerService) produceWithDelivery(topic string, value []byte) error {
+	deliveryChan := make(chan kafka.Event, 1)
 
 	err := kSrv.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
-			Topic:     &employeeDeleteTopic,
+			Topic:     &topic,
 			Partition: kafka.PartitionAny},
-		Value: []byte(employeeId),
-	}, nil)
+		Value: value,
+	}, deliveryChan)
 
 	if err != nil {
-		log.Printf("error producing message: %v for topic: %s", err, employeeDeleteTopic)
-	} else {
-		log.Printf("message produced successfully on topic: %s with value: %v",
-			employeeDeleteTopic, employeeId)
+		log.Printf("error producing message: %v for topic: %s", err, topic)
+		return err
 	}
 
-	return err
+	select {
+	case event := <-deliveryChan:
+		msg, ok := event.(*kafka.Message)
+		if !ok {
+			return fmt.Errorf("unexpected delivery event type for topic: %s", topic)
+		}
+		if msg.TopicPartition.Error != nil {
+			log.Printf("delivery failed for topic %s: %v", topic, msg.TopicPartition.Error)
+			return msg.TopicPartition.Error
+		}
+		log.Printf("message delivered to topic: %s [%d] at offset %v",
+			topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+		return nil
+
+	case <-time.After(producerDeliveryTimeout):
+		return fmt.Errorf("delivery timeout for topic: %s", topic)
+	}
+}
+
+func (kSrv KafkaProducerService) SendInsert(employee dto.EmployeeMessage) error {
+	value, err := json.Marshal(employee)
+	if err != nil {
+		return fmt.Errorf("failed to marshal employee: %w", err)
+	}
+
+	return kSrv.produceWithDelivery(employeeInsertTopic, value)
+}
+
+func (kSrv KafkaProducerService) SendUpdate(employee dto.EmployeeMessage) error {
+	value, err := json.Marshal(employee)
+	if err != nil {
+		return fmt.Errorf("failed to marshal employee: %w", err)
+	}
+
+	return kSrv.produceWithDelivery(employeeUpdateTopic, value)
+}
+
+func (kSrv KafkaProducerService) SendDelete(employeeId string) error {
+	return kSrv.produceWithDelivery(employeeDeleteTopic, []byte(employeeId))
 }

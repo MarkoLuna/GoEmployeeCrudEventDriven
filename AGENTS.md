@@ -71,6 +71,7 @@ controllers/ → services/ → repositories/ → PostgreSQL
 | Keycloak | Custom wrapper in `common/services/auth/keycloak_impl.go` |
 | Validation | `gopkg.in/go-playground/validator.v9` |
 | Swagger | `github.com/swaggo/swag` + `github.com/swaggo/echo-swagger` |
+| Circuit Breaker | `github.com/sony/gobreaker` |
 | Testing | `github.com/stretchr/testify`, `github.com/DATA-DOG/go-sqlmock` |
 | Go version | `1.25.5` |
 | CGO | **Enabled** (required by `confluent-kafka-go`) |
@@ -161,6 +162,7 @@ Each service reads `.env` from its own working directory.
 | `DB_DRIVER_NAME` | `postgres` | Go database driver |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka broker address |
 | `KAFKA_CONSUMER_GROUP_ID` | `employee-group` | Consumer group (consumer only) |
+| `HTTP_TIMEOUT` | `30s` | HTTP client timeout for consumer proxy calls |
 | `OAUTH_ENABLED` | `false` | Keycloak auth toggle |
 
 ---
@@ -203,3 +205,7 @@ Each service reads `.env` from its own working directory.
 - **Bruno collection** — `bruno-collection/` covers all REST CRUD endpoints for manual testing.
 - **Use `utils.GetEnv(key, default)`** for env variables, never raw `os.Getenv`.
 - **Service Communication** — GET (read) operations proxy requests from the `employee-service` to the `employee-consumer` via HTTP using `EMPLOYEE_CONSUMER_HOST`. Command/write actions propagate from the `employee-service` to the `employee-consumer` via Kafka events.
+- **HTTP Circuit Breaker** — `employee-service` wraps consumer HTTP calls with sony/gobreaker (file: `internal/clients/circuit_breaker.go`). Trips at ≥60% failure rate over ≥5 requests. Prevents cascading failures.
+- **HTTP Retry with Backoff** — Consumer proxy calls retry up to 3 times on 5xx/timeouts/net.OpError (file: `internal/clients/retry.go`). Supports `BackoffStrategyExponential` (default) and `BackoffStrategyLinear`. Request body is buffered for re-send on retry.
+- **Kafka Producer Idempotence** — `enable.idempotence=true` in `internal/services/impl/kafka_producer_service_impl.go` ensures exactly-once publishing with ordered delivery.
+- **Async 202 Pattern** — Write endpoints (POST/PUT/DELETE) return `202 Accepted` immediately after Kafka publish, decoupling from consumer processing.

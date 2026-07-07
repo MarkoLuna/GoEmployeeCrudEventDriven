@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"context"
+
 	"github.com/MarkoLuna/EmployeeService/internal/models"
 )
 
@@ -34,7 +36,7 @@ func NewEmployeeConsumerServiceStubFromError(err error) EmployeeConsumerServiceC
 	return &EmployeeConsumerServiceClientStub{employees: nil, err: err}
 }
 
-func (es EmployeeConsumerServiceClientStub) Create(e models.Employee) (models.Employee, error) {
+func (es EmployeeConsumerServiceClientStub) Create(ctx context.Context, e models.Employee) (models.Employee, error) {
 	if len(es.employees) == 0 {
 		return models.Employee{}, es.err
 	}
@@ -42,11 +44,11 @@ func (es EmployeeConsumerServiceClientStub) Create(e models.Employee) (models.Em
 	return es.employees[0], es.err
 }
 
-func (es EmployeeConsumerServiceClientStub) FindAll() ([]models.Employee, error) {
+func (es EmployeeConsumerServiceClientStub) FindAll(ctx context.Context) ([]models.Employee, error) {
 	return es.employees, es.err
 }
 
-func (es EmployeeConsumerServiceClientStub) FindById(ID string) (models.Employee, error) {
+func (es EmployeeConsumerServiceClientStub) FindById(ctx context.Context, ID string) (models.Employee, error) {
 	if len(es.employees) == 0 {
 		return models.Employee{}, es.err
 	}
@@ -54,11 +56,11 @@ func (es EmployeeConsumerServiceClientStub) FindById(ID string) (models.Employee
 	return es.employees[0], es.err
 }
 
-func (es EmployeeConsumerServiceClientStub) DeleteById(ID string) error {
+func (es EmployeeConsumerServiceClientStub) DeleteById(ctx context.Context, ID string) error {
 	return es.err
 }
 
-func (es EmployeeConsumerServiceClientStub) Update(e models.Employee) (models.Employee, error) {
+func (es EmployeeConsumerServiceClientStub) Update(ctx context.Context, e models.Employee) (models.Employee, error) {
 	if len(es.employees) == 0 {
 		return models.Employee{}, es.err
 	}

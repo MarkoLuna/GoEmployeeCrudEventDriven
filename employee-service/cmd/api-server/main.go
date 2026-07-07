@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/MarkoLuna/EmployeeService/internal/app"
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
@@ -64,8 +65,10 @@ func ConfigureApp() {
 	App.EmployeeService = services.NewEmployeeService(App.EmployeeConsumerServiceClientBuilder, App.KafkaProducerService)
 	App.EmployeeController = controllers.NewEmployeeController(App.EmployeeService)
 
+	authTimeout := utils.ParseIntEnv("AUTH_SERVICE_TIMEOUT", 5)
 	App.ValidationClient = auth.NewTokenValidationClient(
 		utils.GetEnv("AUTH_SERVICE_URL", "http://localhost:8082"),
+		time.Duration(authTimeout)*time.Second,
 	)
 
 	log.Println("OAuth handled by external auth-service")

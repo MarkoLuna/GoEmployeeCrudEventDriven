@@ -58,13 +58,16 @@ func (eCtrl EmployeeController) CreateEmployee(c echo.Context) error {
 	}
 
 	jwt := eCtrl.getJwtToken(c)
-	e, err := eCtrl.employeeService.CreateEmployee(jwt, employee)
+	_, err = eCtrl.employeeService.CreateEmployee(c.Request().Context(), jwt, employee)
 	if err != nil {
 		log.Println(err)
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, e)
+	return c.JSON(http.StatusAccepted, map[string]string{
+		"status":  "accepted",
+		"message": "Employee creation request submitted",
+	})
 }
 
 // GetEmployees EmployeeApi
@@ -79,7 +82,7 @@ func (eCtrl EmployeeController) CreateEmployee(c echo.Context) error {
 // @Router /api/employee/ [get]
 func (eCtrl EmployeeController) GetEmployees(c echo.Context) error {
 	jwt := eCtrl.getJwtToken(c)
-	newEmployees, err := eCtrl.employeeService.GetEmployees(jwt)
+	newEmployees, err := eCtrl.employeeService.GetEmployees(c.Request().Context(), jwt)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -101,7 +104,7 @@ func (eCtrl EmployeeController) GetEmployees(c echo.Context) error {
 func (eCtrl EmployeeController) GetEmployeeById(c echo.Context) error {
 	jwt := eCtrl.getJwtToken(c)
 	employeeId := c.Param("employeeId")
-	EmployeeDetails, err := eCtrl.employeeService.GetEmployeeById(jwt, employeeId)
+	EmployeeDetails, err := eCtrl.employeeService.GetEmployeeById(c.Request().Context(), jwt, employeeId)
 	if err == nil {
 		return c.JSON(http.StatusOK, EmployeeDetails)
 	} else {
@@ -141,9 +144,12 @@ func (eCtrl EmployeeController) UpdateEmployee(c echo.Context) error {
 
 	jwt := eCtrl.getJwtToken(c)
 	employeeId := c.Param("employeeId")
-	employeeDetails, err := eCtrl.employeeService.UpdateEmployee(jwt, employeeId, updateEmployee)
+	_, err = eCtrl.employeeService.UpdateEmployee(c.Request().Context(), jwt, employeeId, updateEmployee)
 	if err == nil {
-		return c.JSON(http.StatusOK, employeeDetails)
+		return c.JSON(http.StatusAccepted, map[string]string{
+			"status":  "accepted",
+			"message": "Employee update request submitted",
+		})
 	} else {
 		return c.String(http.StatusNotFound, err.Error())
 	}
@@ -164,9 +170,12 @@ func (eCtrl EmployeeController) DeleteEmployee(c echo.Context) error {
 	jwt := eCtrl.getJwtToken(c)
 	employeeId := c.Param("employeeId")
 
-	err := eCtrl.employeeService.DeleteEmployeeById(jwt, employeeId)
+	err := eCtrl.employeeService.DeleteEmployeeById(c.Request().Context(), jwt, employeeId)
 	if err == nil {
-		return c.String(http.StatusOK, "")
+		return c.JSON(http.StatusAccepted, map[string]string{
+			"status":  "accepted",
+			"message": "Employee deletion request submitted",
+		})
 	} else {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}

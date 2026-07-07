@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -26,7 +27,7 @@ func TestEmployeeService_GetEmployeesEmployees(t *testing.T) {
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
 	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
-	employeesSlice, err := employeeService.GetEmployees(testJwt)
+	employeesSlice, err := employeeService.GetEmployees(context.Background(), testJwt)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(employeesSlice), "handler returned unexpected body: got empty")
@@ -59,7 +60,7 @@ func TestEmployeeService_CreateEmployeeEmployee(t *testing.T) {
 	employee.DateOfEmployment = time.Now().UTC()
 	employee.Status = constants.ACTIVE
 
-	_, err := employeeService.CreateEmployee(testJwt, employee)
+	_, err := employeeService.CreateEmployee(context.Background(), testJwt, employee)
 
 	assert.NoError(t, err)
 }
@@ -74,7 +75,7 @@ func TestEmployeeService_GetEmployeeByIdEmployee(t *testing.T) {
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
 	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
-	employeeResponse, err := employeeService.GetEmployeeById(testJwt, "1")
+	employeeResponse, err := employeeService.GetEmployeeById(context.Background(), testJwt, "1")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, employeeResponse)
@@ -98,7 +99,7 @@ func TestEmployeeService_UpdateEmployee(t *testing.T) {
 	employee.DateOfEmployment = time.Now().UTC()
 	employee.Status = constants.ACTIVE
 
-	employeeResponse, err := employeeService.UpdateEmployee(testJwt, "1", employee)
+	employeeResponse, err := employeeService.UpdateEmployee(context.Background(), testJwt, "1", employee)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, employeeResponse)
@@ -111,7 +112,7 @@ func TestEmployeeService_DeleteEmployee(t *testing.T) {
 	employeeProducerService := stubs.NewKafkaProducerServiceStub()
 	employeeService := NewEmployeeService(clientBuilder, employeeProducerService)
 
-	err := employeeService.DeleteEmployeeById(testJwt, "1")
+	err := employeeService.DeleteEmployeeById(context.Background(), testJwt, "1")
 	assert.NoError(t, err)
 }
 

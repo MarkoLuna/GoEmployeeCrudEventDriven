@@ -7,6 +7,7 @@ require (
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/go-oauth2/oauth2/v4 v4.4.2
 	github.com/labstack/echo/v4 v4.15.1
+	github.com/sony/gobreaker v1.0.0
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/swaggo/swag v1.16.4

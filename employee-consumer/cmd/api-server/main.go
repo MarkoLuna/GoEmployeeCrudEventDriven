@@ -87,8 +87,10 @@ func ConfigureApp(ctx context.Context, coordinator app.ShutdownCoordinator) {
 
 	App.EmployeeKafkaConsumerService = impl.NewKafkaConsumerService(kafkaConsumer, kafkaProducer, App.EmployeeService)
 
+	authTimeout := utils.ParseIntEnv("AUTH_SERVICE_TIMEOUT", 5)
 	App.ValidationClient = auth.NewTokenValidationClient(
 		utils.GetEnv("AUTH_SERVICE_URL", "http://localhost:8082"),
+		time.Duration(authTimeout)*time.Second,
 	)
 
 	log.Println("OAuth handled by external auth-service")

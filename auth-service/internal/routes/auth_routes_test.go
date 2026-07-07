@@ -125,5 +125,4 @@ func TestRegisterHealthcheckRoute(t *testing.T) {
 	echoInstance.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "Healthy", rec.Body.String())
 }

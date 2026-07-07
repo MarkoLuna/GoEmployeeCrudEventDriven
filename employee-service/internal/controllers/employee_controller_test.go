@@ -110,7 +110,7 @@ func TestEmployeeController_CreateEmployeeEmployee(t *testing.T) {
 	c := e.NewContext(req, rr)
 
 	if assert.NoError(t, employeeController.CreateEmployee(c)) {
-		assert.Equal(t, http.StatusCreated, rr.Code, "handler returned wrong status code")
+		assert.Equal(t, http.StatusAccepted, rr.Code, "handler returned wrong status code")
 	}
 }
 
@@ -234,7 +234,7 @@ func TestEmployeeController_UpdateEmployee(t *testing.T) {
 	c.SetParamValues("1")
 
 	if assert.NoError(t, employeeController.UpdateEmployee(c)) {
-		assert.Equal(t, http.StatusOK, rr.Code, "handler returned wrong status code")
+		assert.Equal(t, http.StatusAccepted, rr.Code, "handler returned wrong status code")
 	}
 }
 
@@ -288,7 +288,7 @@ func TestEmployeeController_DeleteEmployee(t *testing.T) {
 	c.SetParamValues("1")
 
 	if assert.NoError(t, employeeController.DeleteEmployee(c)) {
-		assert.Equal(t, http.StatusOK, rr.Code, "handler returned wrong status code")
+		assert.Equal(t, http.StatusAccepted, rr.Code, "handler returned wrong status code")
 	}
 
 }
