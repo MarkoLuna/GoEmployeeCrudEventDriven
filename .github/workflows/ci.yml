@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - name: common
+            path: common
+            cgo: false
+            build: false
+          - name: auth-service
+            path: auth-service
+            cgo: false
+            build: true
+          - name: employee-service
+            path: employee-service
+            cgo: true
+            build: true
+          - name: employee-consumer
+            path: employee-consumer
+            cgo: true
+            build: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.path }}/go.mod
+          cache-dependency-path: ${{ matrix.path }}/go.sum
+
+      - name: Install system dependencies
+        if: matrix.cgo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librdkafka-dev
+
+      - name: Tidy dependencies
+        run: go mod tidy
+        working-directory: ${{ matrix.path }}
+
+      - name: Verify dependencies
+        run: go mod verify
+        working-directory: ${{ matrix.path }}
+
+      - name: Vet
+        run: go vet ./...
+        working-directory: ${{ matrix.path }}
+
+      - name: Test
+        run: go test -timeout 30s ./...
+        working-directory: ${{ matrix.path }}
+
+      - name: Build
+        if: matrix.build
+        run: go build -mod readonly -o /dev/null ./cmd/api-server
+        working-directory: ${{ matrix.path }}
