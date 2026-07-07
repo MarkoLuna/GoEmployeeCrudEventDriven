@@ -1,15 +1,19 @@
 package clients
 
-import "github.com/MarkoLuna/EmployeeService/internal/models"
+import (
+	"context"
+
+	"github.com/MarkoLuna/EmployeeService/internal/models"
+)
 
 type EmployeeConsumerServiceClient interface {
-	Create(e models.Employee) (models.Employee, error)
+	Create(ctx context.Context, e models.Employee) (models.Employee, error)
 
-	FindAll() ([]models.Employee, error)
+	FindAll(ctx context.Context) ([]models.Employee, error)
 
-	FindById(ID string) (models.Employee, error)
+	FindById(ctx context.Context, ID string) (models.Employee, error)
 
-	DeleteById(ID string) error
+	DeleteById(ctx context.Context, ID string) error
 
-	Update(e models.Employee) (models.Employee, error)
+	Update(ctx context.Context, e models.Employee) (models.Employee, error)
 }

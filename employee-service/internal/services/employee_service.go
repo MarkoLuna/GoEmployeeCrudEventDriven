@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
@@ -25,28 +26,28 @@ func (eSrv EmployeeService) getClient(jwt string) clients.EmployeeConsumerServic
 	return eSrv.clientBuilder.WithJwtToken(jwt).Build()
 }
 
-func (eSrv EmployeeService) CreateEmployee(jwt string, employeeRequest dto.EmployeeRequest) (*models.Employee, error) {
+func (eSrv EmployeeService) CreateEmployee(ctx context.Context, jwt string, employeeRequest dto.EmployeeRequest) (*models.Employee, error) {
 
 	employeeMessage := dto.EmployeeMessage{EmployeeInfo: employeeRequest}
 	err := eSrv.employeeProducerService.SendInsert(employeeMessage)
 	return nil, err
 }
 
-func (eSrv EmployeeService) GetEmployees(jwt string) ([]models.Employee, error) {
+func (eSrv EmployeeService) GetEmployees(ctx context.Context, jwt string) ([]models.Employee, error) {
 	client := eSrv.getClient(jwt)
-	employees, err := client.FindAll()
+	employees, err := client.FindAll(ctx)
 	return employees, err
 }
 
-func (eSrv EmployeeService) GetEmployeeById(jwt string, employeeId string) (models.Employee, error) {
+func (eSrv EmployeeService) GetEmployeeById(ctx context.Context, jwt string, employeeId string) (models.Employee, error) {
 	client := eSrv.getClient(jwt)
-	employeeDetails, err := client.FindById(employeeId)
+	employeeDetails, err := client.FindById(ctx, employeeId)
 	return employeeDetails, err
 }
 
-func (eSrv EmployeeService) UpdateEmployee(jwt string, employeeId string, employee dto.EmployeeRequest) (models.Employee, error) {
+func (eSrv EmployeeService) UpdateEmployee(ctx context.Context, jwt string, employeeId string, employee dto.EmployeeRequest) (models.Employee, error) {
 	client := eSrv.getClient(jwt)
-	currentEmployee, err := client.FindById(employeeId)
+	currentEmployee, err := client.FindById(ctx, employeeId)
 	if err == nil {
 
 		employeeMessage := dto.EmployeeMessage{ID: currentEmployee.Id, EmployeeInfo: employee}
@@ -57,7 +58,7 @@ func (eSrv EmployeeService) UpdateEmployee(jwt string, employeeId string, employ
 	}
 }
 
-func (eSrv EmployeeService) DeleteEmployeeById(jwt string, employeeId string) error {
+func (eSrv EmployeeService) DeleteEmployeeById(ctx context.Context, jwt string, employeeId string) error {
 	err := eSrv.employeeProducerService.SendDelete(employeeId)
 	return err
 }

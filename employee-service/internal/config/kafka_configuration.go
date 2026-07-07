@@ -11,7 +11,9 @@ var (
 
 func NewKafkaProducer() (*kafka.Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": bootstrapServers,
+		"bootstrap.servers":  bootstrapServers,
+		"acks":               "all",
+		"enable.idempotence": true,
 	})
 
 	return p, err

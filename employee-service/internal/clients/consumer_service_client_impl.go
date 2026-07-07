@@ -2,6 +2,7 @@ package clients
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -30,7 +31,7 @@ func NewEmployeeConsumerServiceClient(client http.Client) EmployeeConsumerServic
 	}
 }
 
-func (es *EmployeeConsumerServiceClientImpl) Create(e models.Employee) (models.Employee, error) {
+func (es *EmployeeConsumerServiceClientImpl) Create(ctx context.Context, e models.Employee) (models.Employee, error) {
 
 	var employee models.Employee
 	jsonStr, err := json.Marshal(e)
@@ -38,7 +39,7 @@ func (es *EmployeeConsumerServiceClientImpl) Create(e models.Employee) (models.E
 		return employee, err
 	}
 
-	req, err := http.NewRequest("POST", es.serviceHost+"/api/employee/", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequestWithContext(ctx, "POST", es.serviceHost+"/api/employee/", bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return employee, err
 	}
@@ -46,7 +47,7 @@ func (es *EmployeeConsumerServiceClientImpl) Create(e models.Employee) (models.E
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+es.token)
 
-	resp, err := es.client.Do(req)
+	resp, err := doWithRetry(ctx, es.client.Do, req, BackoffStrategyExponential)
 	if err != nil {
 		return employee, err
 	}
@@ -69,9 +70,9 @@ func (es *EmployeeConsumerServiceClientImpl) Create(e models.Employee) (models.E
 	return employee, nil
 }
 
-func (es *EmployeeConsumerServiceClientImpl) FindAll() ([]models.Employee, error) {
+func (es *EmployeeConsumerServiceClientImpl) FindAll(ctx context.Context) ([]models.Employee, error) {
 
-	req, err := http.NewRequest("GET", es.serviceHost+"/api/employee/", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", es.serviceHost+"/api/employee/", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (es *EmployeeConsumerServiceClientImpl) FindAll() ([]models.Employee, error
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+es.token)
 
-	resp, err := es.client.Do(req)
+	resp, err := doWithRetry(ctx, es.client.Do, req, BackoffStrategyExponential)
 	if err != nil {
 		log.Printf("FindAll error: %v", err)
 		return nil, err
@@ -104,10 +105,10 @@ func (es *EmployeeConsumerServiceClientImpl) FindAll() ([]models.Employee, error
 	return employeesResponse, nil
 }
 
-func (es *EmployeeConsumerServiceClientImpl) FindById(ID string) (models.Employee, error) {
+func (es *EmployeeConsumerServiceClientImpl) FindById(ctx context.Context, ID string) (models.Employee, error) {
 
 	var employee models.Employee
-	req, err := http.NewRequest("GET", es.serviceHost+"/api/employee/"+ID, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", es.serviceHost+"/api/employee/"+ID, nil)
 	if err != nil {
 		return employee, err
 	}
@@ -115,7 +116,7 @@ func (es *EmployeeConsumerServiceClientImpl) FindById(ID string) (models.Employe
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+es.token)
 
-	resp, err := es.client.Do(req)
+	resp, err := doWithRetry(ctx, es.client.Do, req, BackoffStrategyExponential)
 	if err != nil {
 		return employee, err
 	}
@@ -143,16 +144,16 @@ func (es *EmployeeConsumerServiceClientImpl) FindById(ID string) (models.Employe
 	return employee, nil
 }
 
-func (es *EmployeeConsumerServiceClientImpl) DeleteById(ID string) error {
+func (es *EmployeeConsumerServiceClientImpl) DeleteById(ctx context.Context, ID string) error {
 
-	req, err := http.NewRequest("DELETE", es.serviceHost+"/api/employee/"+ID, nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", es.serviceHost+"/api/employee/"+ID, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", "Bearer "+es.token)
 
-	resp, err := es.client.Do(req)
+	resp, err := doWithRetry(ctx, es.client.Do, req, BackoffStrategyExponential)
 	if err != nil {
 		return err
 	}
@@ -167,7 +168,7 @@ func (es *EmployeeConsumerServiceClientImpl) DeleteById(ID string) error {
 	}
 }
 
-func (es *EmployeeConsumerServiceClientImpl) Update(e models.Employee) (models.Employee, error) {
+func (es *EmployeeConsumerServiceClientImpl) Update(ctx context.Context, e models.Employee) (models.Employee, error) {
 
 	var employee models.Employee
 	jsonStr, err := json.Marshal(e)
@@ -175,7 +176,7 @@ func (es *EmployeeConsumerServiceClientImpl) Update(e models.Employee) (models.E
 		return employee, err
 	}
 
-	req, err := http.NewRequest("PUT", es.serviceHost+"/api/employee/"+e.Id, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequestWithContext(ctx, "PUT", es.serviceHost+"/api/employee/"+e.Id, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return employee, err
 	}
@@ -183,7 +184,7 @@ func (es *EmployeeConsumerServiceClientImpl) Update(e models.Employee) (models.E
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+es.token)
 
-	resp, err := es.client.Do(req)
+	resp, err := doWithRetry(ctx, es.client.Do, req, BackoffStrategyExponential)
 	if err != nil {
 		return employee, err
 	}

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/MarkoLuna/EmployeeService/internal/clients"
-	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/EmployeeService/internal/controllers"
+	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/constants"
 	"github.com/MarkoLuna/GoEmployeeCrudEventDriven/common/dto"
 	"github.com/MarkoLuna/EmployeeService/internal/services"
 	"github.com/MarkoLuna/EmployeeService/internal/services/stubs"
@@ -48,10 +48,10 @@ func TestRegisterEmployeeStoreRoutes(t *testing.T) {
 		handler func(c echo.Context) error
 	}{
 		{"GET", "/api/employee/", nil, http.StatusOK, employeeController.GetEmployees},
-		{"POST", "/api/employee/", bytes.NewBuffer(jsonStr), http.StatusCreated, employeeController.CreateEmployee},
+		{"POST", "/api/employee/", bytes.NewBuffer(jsonStr), http.StatusAccepted, employeeController.CreateEmployee},
 		{"GET", "/api/employee/1", nil, http.StatusOK, employeeController.GetEmployeeById},
-		{"PUT", "/api/employee/1", bytes.NewBuffer(jsonStr), http.StatusOK, employeeController.UpdateEmployee},
-		{"DELETE", "/api/employee/1", nil, http.StatusOK, employeeController.DeleteEmployee},
+		{"PUT", "/api/employee/1", bytes.NewBuffer(jsonStr), http.StatusAccepted, employeeController.UpdateEmployee},
+		{"DELETE", "/api/employee/1", nil, http.StatusAccepted, employeeController.DeleteEmployee},
 	}
 
 	for _, table := range tables {

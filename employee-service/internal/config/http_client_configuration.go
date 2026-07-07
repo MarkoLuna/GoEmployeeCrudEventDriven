@@ -3,12 +3,14 @@ package config
 import (
 	"net/http"
 	"time"
+
+	"github.com/MarkoLuna/EmployeeService/internal/clients"
 )
 
 func NewHttpClient() *http.Client {
-	// Create a custom client with a 10-second timeout.
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout:   10 * time.Second,
+		Transport: clients.NewCircuitBreakerTransport(),
 	}
 
 	return client

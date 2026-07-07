@@ -411,6 +411,75 @@ cd employee-consumer && make test
 
 ---
 
+## Fault Tolerance
+
+The project implements several fault-tolerance mechanisms to ensure resilience against transient failures in distributed communication:
+
+### 1. HTTP Circuit Breaker
+
+**Location:** `employee-service/internal/clients/circuit_breaker.go`
+
+The HTTP client from `employee-service` to `employee-consumer` (read proxy) is wrapped with a [sony/gobreaker](https://github.com/sony/gobreaker) circuit breaker to prevent cascading failures when the consumer service is unhealthy.
+
+| Setting | Value |
+|---|---|
+| Max requests (half-open) | 3 |
+| Reset interval (closed → open) | 60s |
+| Open → half-open timeout | 30s |
+| Trip condition | ≥ 5 requests with ≥ 60% failure rate |
+
+When the circuit is **open**, requests fail immediately without hitting the downstream service, allowing it to recover.
+
+### 2. HTTP Retry with Backoff
+
+**Location:** `employee-service/internal/clients/retry.go`
+
+HTTP calls from `employee-service` to `employee-consumer` are retried on transient failures (5xx status codes, connection timeouts, `net.OpError`).
+
+| Setting | Value |
+|---|---|
+| Max retries | 3 |
+| Initial backoff | 100ms |
+| Max backoff | 2s |
+| Jitter | Random 0–50% of backoff |
+
+Two backoff strategies are available:
+
+- **Exponential** (default): 100ms → 200ms → 400ms (doubles each attempt)
+- **Linear**: 100ms → 200ms → 300ms (adds a fixed step each attempt)
+
+The request body is buffered and re-sent on retries. Context cancellation is respected between attempts.
+
+### 3. Context Propagation & Timeouts
+
+**Location:** `employee-service/internal/clients/consumer_service_client_impl.go`
+
+All outbound HTTP calls propagate a `context.Context` with a configurable timeout (default 30s via `HTTP_TIMEOUT` env var). This ensures:
+
+- Stale or slow downstream calls are cancelled
+- Resources are released promptly
+- Cancellation propagates to the circuit breaker and retry logic
+
+### 4. Kafka Producer Idempotence
+
+**Location:** `employee-service/internal/services/impl/kafka_producer_service_impl.go`
+
+The Kafka producer is configured with `enable.idempotence=true`, providing:
+
+- Exactly-once semantics for published messages
+- No message duplication on broker failures
+- Ordered delivery per partition (max.in.flight=1)
+
+### 5. Async 202 API (Write Operations)
+
+Write endpoints (`POST`, `PUT`, `DELETE`) return `202 Accepted` immediately after publishing the Kafka event, without waiting for the consumer to process it. This:
+
+- Decouples write acceptance from write completion
+- Eliminates synchronous dependency on the consumer database
+- Allows the client to poll or rely on eventual consistency
+
+---
+
 ## Healthcheck
 
 ```bash
@@ -426,8 +495,6 @@ curl -X GET http://localhost:8080/healthcheck/
 # employee-consumer
 curl -X GET http://localhost:8081/healthcheck/
 ```
-
----
 
 ## Swagger UI
 
