@@ -258,14 +258,14 @@ xcode-select --install
 ### 3. PostgreSQL
 Each service connects to a PostgreSQL database. Default connection values:
 
-| Variable | Default |
-|---|---|---|
-| `DB_HOST` | `localhost` |
-| `DB_PORT` | `5432` (service) / `5433` (consumer) / `5434` (auth) |
-| `DB_NAME` | `employee_db` (service/consumer) / `auth_db` (auth) |
-| `DB_USER` | `employee_user` (service/consumer) / `auth_user` (auth) |
-| `DB_PASSWORD` | `employeepw` (service/consumer) / `authpw` (auth) |
-| `DB_DRIVER_NAME` | `postgres` |
+| Variable | Employee Service | Employee Consumer | Auth Service |
+|---|---|---|---|
+| `DB_HOST` | `localhost` | `localhost` | `localhost` |
+| `DB_PORT` | `5432` | `5433` | `5434` |
+| `DB_NAME` | `employee_db` | `employee_db` | `auth_db` |
+| `DB_USER` | `employee_user` | `employee_user` | `auth_user` |
+| `DB_PASSWORD` | `employeepw` | `employeepw` | `authpw` |
+| `DB_DRIVER_NAME` | `postgres` | `postgres` | `postgres` |
 
 The database schema is initialized automatically when using Docker Compose via `resources/init.sql`:
 
